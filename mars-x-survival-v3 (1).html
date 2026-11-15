@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MARS-X · Mars Survival v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04060c;--panel:#0a1020;--line:#1b2b4a;--cy:#00f0ff;--mg:#ff2bd6;--am:#ffb800;--rd:#ff3b4e;--gr:#39ff88;--tx:#cfe8ff;--dim:#6f86a8}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--tx);font-family:"Courier New",monospace;font-size:14px;line-height:1.45;min-height:100vh;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);z-index:80}
+h1,h2,h3,.px{font-family:"Press Start 2P","Courier New",monospace;font-weight:normal}
+button{font-family:inherit;color:inherit;cursor:pointer}
+.screen{display:none;min-height:100vh;padding:10px}
+.screen.active{display:block}
+.btn{background:#07101f;border:2px solid var(--cy);color:var(--cy);padding:10px 14px;font-size:14px;text-transform:uppercase;letter-spacing:1px;box-shadow:4px 4px 0 #003a44;transition:.08s}
+.btn:hover:not(:disabled){background:var(--cy);color:#001418}
+.btn:active:not(:disabled){transform:translate(3px,3px);box-shadow:1px 1px 0 #003a44}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.mg{border-color:var(--mg);color:var(--mg);box-shadow:4px 4px 0 #44003b}.btn.mg:hover:not(:disabled){background:var(--mg);color:#1b0016}
+.btn.rd{border-color:var(--rd);color:var(--rd);box-shadow:4px 4px 0 #440009}.btn.rd:hover:not(:disabled){background:var(--rd);color:#1b0004}
+.panel{background:var(--panel);border:2px solid var(--line);padding:10px;position:relative}
+.panel>h3{font-size:10px;color:var(--cy);margin-bottom:8px;letter-spacing:1px}
+/* MENU */
+#menu{display:none;align-items:center;justify-content:center}
+#menu.active{display:flex}
+.menuBox{max-width:680px;width:100%;text-align:center;padding:26px 18px;border:2px solid var(--cy);background:linear-gradient(180deg,#07122a,#04060c);box-shadow:0 0 40px rgba(0,240,255,.15),inset 0 0 40px rgba(255,43,214,.06)}
+.menuBox h1{font-size:clamp(20px,5vw,34px);color:var(--cy);text-shadow:3px 3px 0 var(--mg);margin-bottom:6px}
+.menuBox .sub{color:var(--mg);font-size:10px;margin-bottom:18px;line-height:1.8}
+.menuBox .btns{display:flex;flex-direction:column;gap:12px;max-width:320px;margin:18px auto}
+.how{text-align:left;font-size:13px;background:#050a16;border:1px dashed var(--line);padding:12px;margin-top:10px;line-height:1.6}
+.how b{color:var(--am)}
+.glitch{animation:gl 3s infinite}
+@keyframes gl{0%,92%,100%{transform:none}94%{transform:translate(-3px,1px)}96%{transform:translate(3px,-1px)}}
+/* HUD */
+#hud{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:8px}
+.stat{background:var(--panel);border:2px solid var(--line);padding:5px 8px}
+.stat .lb{font-size:11px;color:var(--dim);display:flex;justify-content:space-between}
+.stat .lb b{color:var(--tx)}
+.bar{height:10px;background:#02050b;border:1px solid var(--line);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:50%;background:var(--gr);transition:width .15s}
+.stat.o2 i{background:var(--cy)}.stat.pow i{background:var(--am)}.stat.tmp i{background:#ff8a3d}.stat.cri i{background:var(--gr)}.stat.noi i{background:var(--mg)}
+.stat.bad{border-color:var(--rd);animation:pulse .7s infinite}
+.stat.bad i{background:var(--rd)!important}
+@keyframes pulse{50%{background:#2a0a10}}
+.dayStat .big{font-family:"Press Start 2P",monospace;font-size:12px;color:var(--am)}
+/* TOP INVENTORY BAR */
+#invBar{margin-bottom:8px;padding:8px 10px;border-color:#2a4272}
+#invBar>h3{margin-bottom:6px}
+#inv{display:grid;grid-template-columns:1.25fr 1.1fr repeat(4,1fr);gap:8px}
+@media(max-width:760px){#inv{grid-template-columns:repeat(3,1fr)}}
+.islot{min-height:62px;border:2px dashed var(--line);background:#050a16;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px;gap:1px;color:var(--dim);font-size:12px}
+.islot .ic{font-size:24px;line-height:1.1}
+.islot small{font-size:10px;line-height:1.15}
+button.islot{cursor:pointer}
+.islot.fixed{border:2px solid #2a4272;color:var(--tx)}
+.islot.fixed:hover{border-color:var(--cy)}
+.islot.fixed .bar{width:90%;height:7px;margin-top:3px}
+.islot.fixed .bar i{background:var(--am);transition:none}
+.islot.fixed.low{border-color:var(--rd);animation:pulse .7s infinite}
+.islot.fixed.low .bar i{background:var(--rd)}
+.islot .st{color:var(--dim)}.islot .st.on{color:var(--am)}.islot .st.dead{color:var(--rd)}
+.islot.item{border:2px solid var(--am);background:#1d1600;color:var(--am)}
+.islot.item.junk{border-color:#6f86a8;background:#0e1626;color:var(--dim)}
+.islot.item.sel{box-shadow:0 0 0 3px var(--cy),0 0 18px var(--cy);background:#2a2200}
+.islot.item:hover{background:#2a2200}
+#invInfo{margin-top:6px;font-size:12px;min-height:24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#invInfo .btn{padding:3px 8px;font-size:11px}
+/* STAGE */
+#stage{position:relative;border:2px solid var(--line);background:#000;margin-bottom:8px}
+#view{width:100%;display:block;image-rendering:pixelated;touch-action:none;cursor:pointer}
+#stageLbl{position:absolute;top:6px;left:8px;background:rgba(0,0,0,.65);border:1px solid var(--line);padding:4px 8px;font-family:"Press Start 2P",monospace;font-size:9px;color:var(--cy);pointer-events:none}
+#stageLbl small{display:block;font-family:"Courier New",monospace;font-size:11px;color:var(--dim);margin-top:2px}
+#actionBar{position:absolute;left:8px;right:8px;bottom:6px;min-height:30px;border:1px solid var(--line);padding:4px 8px;background:rgba(5,10,22,.85);display:flex;align-items:center;gap:8px;font-size:13px}
+#actionBar .bar{flex:1;margin:0;height:12px}
+#actionBar .bar i{background:var(--am)}
+#bottom{display:grid;grid-template-columns:270px 1fr 340px;gap:10px}
+@media(max-width:1000px){#bottom{grid-template-columns:1fr}}
+.ctrl{display:flex;gap:8px;justify-content:center;margin:2px 0 10px}
+.ctrl button{flex:1;max-width:84px;height:66px;font-size:30px;background:#07101f;border:2px solid var(--cy);color:var(--cy);box-shadow:4px 4px 0 #003a44;user-select:none;touch-action:none}
+.ctrl button:active,.ctrl button.on{background:var(--cy);color:#001418}
+.ctrl button#bE{border-color:var(--gr);color:var(--gr);box-shadow:4px 4px 0 #0a3a1c;font-size:20px}
+.ctrl button#bE:active{background:var(--gr);color:#001408}
+.hint{font-size:12px;color:var(--dim);margin-top:6px}
+#planWrap svg{width:100%;height:auto;display:block;background:#050a16;border:1px solid var(--line)}
+#planWrap .node rect{fill:#0c1830;stroke:#2a4272;stroke-width:.6}
+#planWrap .node text{fill:var(--tx);font-size:3.1px;font-family:"Courier New",monospace;text-anchor:middle;font-weight:bold}
+#planWrap .node.cur rect{fill:#063a44;stroke:var(--cy);stroke-width:1}
+#planWrap .node.go rect{stroke:var(--gr);stroke-dasharray:2 1.5}
+#planWrap .node.jam rect{stroke:var(--rd)}
+#planWrap .node.alien rect{fill:#3a0812;stroke:var(--rd);stroke-width:1}
+#planWrap line{stroke:#2a4272;stroke-width:.8}
+#planWrap line.jam{stroke:var(--rd);stroke-dasharray:1.5 1.5}
+#planWrap .ic{font-size:6px;text-anchor:middle;animation:blink .8s infinite}
+@keyframes blink{50%{opacity:.25}}
+#planWrap.dim svg{filter:brightness(.55)}
+#trk{font-size:12px;margin-top:6px;color:var(--dim)}
+#trk.hot{color:var(--rd);animation:blink .6s infinite}
+.alert{display:flex;flex-direction:column;gap:3px;font-size:12px;border-left:3px solid var(--rd);padding:4px 6px;margin-bottom:6px;background:#1a0a10}
+.alert .bar{height:5px;margin-top:0}.alert .bar i{background:var(--rd)}
+.none{color:var(--dim);font-size:12px}
+/* NASA TELEMETRY */
+#tele{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px}
+.tl{border:1px solid var(--line);background:#050a16;padding:5px 7px;font-size:11px;color:var(--dim)}
+.tl b{display:block;font-size:14px;color:var(--gr)}
+.tl.warn b{color:var(--rd)}
+.tl.am b{color:var(--am)}
+#teleNote{font-size:10.5px;color:var(--dim);margin-top:6px;line-height:1.4}
+#actions{display:grid;grid-template-columns:1fr;gap:8px}
+#ctx{font-size:12px;color:var(--cy);margin-bottom:8px}
+.act{text-align:left;background:#07101f;border:2px solid #2a4272;padding:8px 10px;font-size:13px}
+.act .s{display:block;font-size:11px;color:var(--dim);pointer-events:none}
+.act:hover:not(:disabled){border-color:var(--cy);background:#0a1c33}
+.act.rep{border-color:var(--am)}.act.rep:hover:not(:disabled){border-color:var(--am);background:#2a2000}
+.act:disabled{opacity:.4;cursor:not-allowed}
+#log{font-size:12px;max-height:130px;overflow:auto}
+#log div{padding:2px 0;border-bottom:1px solid #0e1a30}
+#log .w{color:var(--rd)}#log .g{color:var(--gr)}#log .i{color:var(--cy)}
+.row2{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.row2 .btn{padding:6px 10px;font-size:12px}
+/* OVERLAYS */
+.overlay{position:fixed;inset:0;background:rgba(10,0,4,.82);z-index:60;display:flex;align-items:center;justify-content:center;padding:12px}
+.overlay.low{z-index:55}
+.overlay .box{max-width:560px;width:100%;background:#0b0610;border:3px solid var(--rd);padding:16px;text-align:center;box-shadow:0 0 60px rgba(255,59,78,.4);max-height:96vh;overflow:auto}
+.overlay.info .box{border-color:var(--cy);box-shadow:0 0 60px rgba(0,240,255,.2);background:#050a16}
+.overlay .box.wide{max-width:700px}
+.overlay h2{color:var(--rd);font-size:13px;margin-bottom:10px;animation:blink .5s infinite}
+.overlay.info h2{color:var(--cy);animation:none;font-size:12px}
+.overlay p{margin:8px 0;font-size:14px}
+.overlay .btn{margin:6px}
+#cu{width:100%;max-width:640px;display:block;margin:8px auto;border:2px solid var(--line);image-rendering:pixelated;touch-action:none;cursor:pointer;background:#000}
+#cuInfo{min-height:48px;font-size:13px;text-align:left;border:1px solid var(--line);padding:6px 8px;background:#02050b}
+#cuInfo b{color:var(--am)}
+#cuStat{font-size:12px;color:var(--dim);margin-top:6px}
+.cuBtns{display:flex;flex-wrap:wrap;justify-content:center}
+#seq{font-family:"Press Start 2P",monospace;font-size:24px;letter-spacing:10px;margin:12px 0;color:var(--am)}
+#seq .ok{color:var(--gr)}
+.pad{display:grid;grid-template-columns:repeat(3,56px);gap:6px;justify-content:center;margin-top:8px}
+.pad button{height:52px;font-size:22px;background:#07101f;border:2px solid var(--am);color:var(--am)}
+.pad button:active{background:var(--am);color:#000}
+table.man{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;text-align:left}
+table.man td,table.man th{border:1px solid var(--line);padding:5px}
+table.man th{color:var(--cy)}
+#toast{position:fixed;top:12px;right:12px;z-index:90;display:flex;flex-direction:column;gap:8px}
+.toast{background:#1d1600;border:2px solid var(--am);color:var(--am);padding:8px 12px;font-size:13px;animation:tin .3s,tout .5s 3.2s forwards}
+@keyframes tin{from{transform:translateX(120%)}}@keyframes tout{to{opacity:0;transform:translateY(-10px)}}
+/* END / ACHIEVEMENTS */
+.endBox{max-width:700px;margin:20px auto;padding:22px;border:3px solid var(--cy);background:var(--panel);text-align:center}
+.endBox h1{font-size:clamp(16px,4vw,26px);margin:10px 0}
+.endBox .txt{text-align:left;margin:14px 0;font-size:14px;line-height:1.7}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:14px 0;font-size:12px}
+.stats div{border:1px solid var(--line);padding:6px;background:#050a16}.stats b{display:block;color:var(--am);font-size:16px}
+.grade{font-family:"Press Start 2P",monospace;font-size:40px;color:var(--am);text-shadow:3px 3px 0 var(--mg)}
+.achGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;max-width:980px;margin:14px auto}
+.ach{border:2px solid var(--line);background:#050a16;padding:10px;display:flex;gap:10px;align-items:flex-start;opacity:.45;filter:grayscale(1)}
+.ach.on{opacity:1;filter:none;border-color:var(--am);background:#1a1400}
+.ach .em{font-size:26px}.ach b{display:block;color:var(--am);font-size:13px}.ach span{font-size:12px;color:var(--dim)}
+.endGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;max-width:980px;margin:10px auto}
+.endCard{border:1px solid var(--line);padding:8px;font-size:12px;color:var(--dim);background:#050a16;text-align:left}
+.endCard b{display:block;color:var(--dim);font-size:12px;margin-bottom:3px}
+.endCard.on{border-color:var(--gr)}.endCard.on b{color:var(--gr)}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<section id="menu" class="screen active">
+  <div class="menuBox">
+    <h1 class="glitch">MARS-X</h1>
+    <div class="px sub">SURVIVAL AT JEZERO-7 HABITAT<br>5 SOLS · 1 ALIEN · 0 SIGNAL FROM EARTH</div>
+    <p>Walk the base from side to side, search the furniture with your own hands and repair the MARS-X sabotages… quietly.</p>
+    <div class="btns">
+      <button class="btn" id="bStart">▶ Start mission</button>
+      <button class="btn mg" id="bAch">🏆 Achievements &amp; endings</button>
+      <button class="btn" id="bHow">📖 How to play</button>
+    </div>
+    <div class="how" id="how" hidden>
+      <b>Goal:</b> survive 5 Martian days (~80 s each). If the <b>CRISIS</b> bar reaches 0, you lose.<br><br>
+      <b>Move:</b> hold the <b>◀ ▶</b> buttons, use <b>A/D or ←/→</b>, or click the floor to walk there.<br>
+      <b>Interact [E]:</b> stand in front of a door, a workstation or a piece of furniture and press <b>E</b> (or the ✋ button, or click it).<br>
+      <b>Furniture close-ups:</b> the <b>Cabinet, Shelf and Jars</b> open a first-person view. Click an item to inspect it, click it again (or press <b>✋ Take</b>) to grab it. Beware of look-alike junk.<br>
+      <b>Repairs:</b> each sabotage needs one spare part that is always stored in <b>another room</b> (the Lab manual tells you which). Carry the part to the broken station and press <b>E</b>: it is used automatically.<br>
+      <b>Flashlight [F] / Recharge [R]:</b> during blackouts and every night the base goes dark. The flashlight drains while it is on in the dark. Find <b>🔋 batteries</b> inside furniture and recharge, or you will be left blind.<br>
+      <b>MARS-X patrols:</b> the motion tracker on the map shows it when it is next door. If it walks into your room: <b>FREEZE</b> (do not move or work) until it leaves, or run for a door early.<br>
+      <b>Chase:</b> if it detects you, or <b>NOISE</b> hits 100. <b>[H]</b> hide: hold <b>SPACE</b>. <b>[F]</b> flee: type the arrow sequence. <b>P</b> = pause.
+    </div>
+    <p style="margin-top:14px;font-size:11px;color:var(--dim)">NASA Space Apps Challenge project · unofficial fan project · telemetry is simulated</p>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen">
+  <div id="hud">
+    <div class="stat dayStat"><div class="lb"><span id="vPhase">☀ DAY</span><b id="vTime">06:00</b></div><div class="big" id="vDay">1/5</div><div class="bar"><i id="bDay"></i></div></div>
+    <div class="stat o2" id="sO2"><div class="lb"><span>OXYGEN</span><b id="vO2"></b></div><div class="bar"><i></i></div></div>
+    <div class="stat pow" id="sPow"><div class="lb"><span>POWER</span><b id="vPow"></b></div><div class="bar"><i></i></div></div>
+    <div class="stat tmp" id="sTmp"><div class="lb"><span>TEMP.</span><b id="vTmp"></b></div><div class="bar"><i></i></div></div>
+    <div class="stat cri" id="sCri"><div class="lb"><span>CRISIS</span><b id="vCri"></b></div><div class="bar"><i></i></div></div>
+    <div class="stat noi" id="sNoi"><div class="lb"><span>NOISE</span><b id="vNoi"></b></div><div class="bar"><i></i></div></div>
+  </div>
+
+  <div class="panel" id="invBar"><h3>🎒 INVENTORY</h3><div id="inv"></div><div id="invInfo"></div></div>
+
+  <div id="stage">
+    <canvas id="view" width="960" height="420"></canvas>
+    <div id="stageLbl"><span id="rName"></span><small id="rSub"></small></div>
+    <div id="actionBar"><span id="aLabel" class="none">Idle</span></div>
+  </div>
+
+  <div id="bottom">
+    <div>
+      <div class="panel">
+        <h3>CONTROLS</h3>
+        <div class="ctrl"><button id="bL">◀</button><button id="bE" title="Interact (E)">✋ E</button><button id="bR">▶</button></div>
+        <div class="hint">A/D or ←/→ walk · E interact · F flashlight · R recharge</div>
+      </div>
+      <div class="panel" style="margin-top:10px" id="planWrap"><h3>MAP · MOTION TRACKER</h3><div id="plan"></div><div id="trk"></div></div>
+    </div>
+    <div>
+      <div class="panel"><h3>⚠ ALERTS</h3><div id="alerts"></div></div>
+      <div class="panel" style="margin-top:10px"><h3>🛰 NASA TELEMETRY · JEZERO CRATER</h3><div id="tele"></div>
+        <div id="teleNote">Simulated feed modeled on public NASA Mars 2020 data ranges (Perseverance MEDA weather station and the MOXIE oxygen experiment). Not live data.</div>
+      </div>
+    </div>
+    <div>
+      <div class="panel"><h3>ACTIONS</h3><div id="ctx"></div><div id="actions"></div></div>
+      <div class="panel" style="margin-top:10px"><h3>LOG</h3><div id="log"></div>
+        <div class="row2"><button class="btn" id="bNotes" hidden>📖 Notes</button><button class="btn" id="bPause">⏸ Pause</button><button class="btn" id="bMute">🔊</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- END -->
+<section id="end" class="screen"><div class="endBox" id="endBox"></div></section>
+
+<!-- ACHIEVEMENTS -->
+<section id="achv" class="screen">
+  <div style="text-align:center;margin-top:10px"><h1 class="px" style="font-size:18px;color:var(--am)">🏆 UNLOCKED ACHIEVEMENTS</h1><div id="achCount" style="color:var(--dim);margin:6px 0"></div></div>
+  <div class="achGrid" id="achGrid"></div>
+  <div style="text-align:center;margin-top:18px"><h2 class="px" style="font-size:13px;color:var(--cy)">THE 5 ENDINGS</h2></div>
+  <div class="endGrid" id="endGrid"></div>
+  <div style="text-align:center;margin:10px"><button class="btn" id="bAchBack">← Back</button></div>
+</section>
+
+<!-- FURNITURE CLOSE-UP -->
+<div id="close" class="overlay info low" hidden>
+  <div class="box wide">
+    <h2 id="cuTitle"></h2>
+    <canvas id="cu" width="640" height="360"></canvas>
+    <div id="cuInfo"></div>
+    <div id="cuStat"></div>
+    <div class="cuBtns">
+      <button class="btn" id="cuTake" disabled>✋ Take</button>
+      <button class="btn rd" id="cuClose">✖ Close [Esc]</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHASE -->
+<div id="chase" class="overlay" hidden>
+  <div class="box">
+    <h2>MARS-X HAS FOUND YOU!</h2>
+    <div class="bar"><i id="chBar" style="background:var(--rd)"></i></div>
+    <div id="chChoose">
+      <p>It knows where you are. Decide NOW:</p>
+      <button class="btn" id="bHide">🚪 Hide in the locker [H]</button>
+      <button class="btn rd" id="bFlee">🏃 Flee to another room [F]</button>
+    </div>
+    <div id="chHide" hidden>
+      <p>Hold your breath: <b>hold SPACE</b> (or the button) until it leaves. If you let go, it finds you.</p>
+      <div class="bar" style="height:16px"><i id="holdBar" style="background:var(--gr)"></i></div>
+      <button class="btn" id="bHold" style="margin-top:12px;padding:18px 30px">HOLD</button>
+    </div>
+    <div id="chFlee" hidden>
+      <p>Type the sequence (arrows / WASD) or tap the buttons!</p>
+      <div id="seq"></div>
+      <div class="pad"><span></span><button data-k="↑">↑</button><span></span><button data-k="←">←</button><button data-k="↓">↓</button><button data-k="→">→</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- MANUAL -->
+<div id="manual" class="overlay info" hidden>
+  <div class="box wide">
+    <h2>📖 REPAIR MANUAL</h2>
+    <table class="man" id="manTable"></table>
+    <p style="font-size:12px;color:var(--dim)">The spare part is always in a different room from the fault, inside a Cabinet, Shelf or Jars (random). Watch out for look-alikes.</p>
+    <div style="text-align:center"><button class="btn" id="bManClose">Close</button></div>
+  </div>
+</div>
+
+<div id="pauseOv" class="overlay info" hidden><div class="box" style="text-align:center"><h2>⏸ PAUSED</h2><p>MARS-X is waiting too.</p><button class="btn" id="bResume">Resume</button></div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ============ CONFIG ============ */
+const DAY_LEN = 80;                    // real seconds per Martian day
+const NIGHT_AT = 0.72;                 // fraction of the day when night starts
+const MAXC = [1,2,2,3,3];              // simultaneous sabotages per day
+const INTV = [[20,27],[15,21],[12,17],[9,14],[7,11]];   // seconds between sabotages
+const PATROL = [[13,17],[11,15],[9,13],[7,11],[6,9]];   // seconds between MARS-X room changes
+const BATT_DRAIN = 2.4;                // flashlight % per second while lit in the dark
+const MAX_SPARE = 3;                   // spare batteries you can carry
+const W=960, H=420, FY=345, SPEED=230, MAXINV=4;
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const rnd = (a,b) => a + Math.random()*(b-a);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const FURNS = ['cabinet','shelf','jars'];
+const FNAME = {cabinet:'🗄 Cabinet',shelf:'📚 Shelf',jars:'🧪 Jars'};
+const FURN = [{f:'cabinet',x:625},{f:'shelf',x:715},{f:'jars',x:805}];
+const BATTERY = {batt:true,i:'🔋',n:'Flashlight battery',m:'A charged power cell. It fits your flashlight.'};
+
+/* ============ DATA ============ */
+const ROOMS = {
+  control:   {name:'Control Room',        short:'CONTROL',    mx:50,my:50, sub:'Core and telemetry',     doors:[{to:'greenhouse',x:70},{to:'lab',x:480},{to:'machines',x:890}], stations:[{id:'console',x:310,name:'Control Console',icon:'🖥'}]},
+  greenhouse:{name:'Greenhouse / MOXIE',  short:'GREENHOUSE', mx:20,my:18, sub:'Oxygen management',      doors:[{to:'lab',x:70},{to:'control',x:890}],                          stations:[{id:'moxie',x:330,name:'MOXIE Unit',icon:'🌱'}]},
+  machines:  {name:'Machine Room',        short:'MACHINES',   mx:80,my:18, sub:'Power and temperature',  doors:[{to:'control',x:70},{to:'airlock',x:890}],                      stations:[{id:'gen',x:260,name:'Generator',icon:'⚡'},{id:'panel',x:440,name:'Tech Panel',icon:'🎛'}]},
+  lab:       {name:'Laboratory',          short:'LAB',        mx:20,my:82, sub:'Tools and manuals',      doors:[{to:'greenhouse',x:70},{to:'control',x:480},{to:'airlock',x:890}], stations:[{id:'bench',x:310,name:'Manual Desk',icon:'📖'}]},
+  airlock:   {name:'Outer Airlock',       short:'AIRLOCK',    mx:80,my:82, sub:'CRITICAL ZONE',          doors:[{to:'machines',x:70},{to:'lab',x:890}],                         stations:[{id:'hatch',x:480,name:'Outer Hatch',icon:'🚪'}]}
+};
+for(const k in ROOMS) ROOMS[k].links = ROOMS[k].doors.map(d=>d.to);
+const ITEMS = {
+  filter:  {name:'MOXIE Filter',   icon:'🧪', src:'lab'},
+  coolant: {name:'Coolant',        icon:'❄️', src:'greenhouse'},
+  fuse:    {name:'Fuse',           icon:'🔌', src:'control'},
+  card:    {name:'Master Keycard', icon:'💳', src:'airlock'},
+  seal:    {name:'Emergency Seal', icon:'🩹', src:'machines'}
+};
+const SAB = {
+  oxygen:{icon:'💨',name:'MOXIE unregulated',  room:'greenhouse',st:'moxie',  item:'filter',  msg:'MARS-X tampered with the MOXIE. Oxygen is dropping fast. You need a spare filter.'},
+  temp:  {icon:'🌡',name:'Temperature altered',room:'machines',  st:'panel',  item:'coolant', msg:'MARS-X altered the reactor temperature. Coolant required.'},
+  lights:{icon:'💡',name:'Lights out',         room:'machines',  st:'panel',  item:'fuse',    msg:'MARS-X cut the lights across the base. Replace a fuse at the Machine Room panel.'},
+  door:  {icon:'🔒',name:'Door jammed',        room:'control',   st:'console',item:'card',    msg:'MARS-X jammed a door. Reset it from the Control console with a master keycard.'},
+  breach:{icon:'🚨',name:'Airlock breach',     room:'airlock',   st:'hatch',  item:'seal',    msg:'BREACH in the Outer Airlock! You are losing air. You need an emergency seal.'}
+};
+const DECOYS = {
+  cabinet:[{i:'🧤',n:'Thermal gloves',m:'Thick gloves. Useful, but not for this.'},{i:'🥽',n:'Welding goggles',m:'Scratched goggles. No use here.'},{i:'🪫',n:'Dead battery',m:'Completely drained. It will not power anything.'},{i:'🧥',n:'Spare suit',m:'Smells like Martian mold.'},{i:'🥫',n:'Expired ration',m:'Expired 2 sols ago.'},{i:'🔌',n:'Blown fuse',m:'Black and melted. Useless.'},{i:'💳',n:'Expired keycard',m:'Access expired: the console will reject it.'},{i:'🧯',n:'Fire extinguisher',m:'Heavy. You do not need it now.'}],
+  shelf:[{i:'📔',n:'Old logbook',m:'Pages full of scribbles. Nothing useful.'},{i:'📎',n:'Paper clips',m:'A handful of clips.'},{i:'📻',n:'Radio, no signal',m:'Only static.'},{i:'🔩',n:'Rusty screws',m:'Rusted to the core.'},{i:'📦',n:'Empty box',m:'Nothing inside.'},{i:'🧪',n:'Water filter',m:'A common filter: it does not fit the MOXIE.'},{i:'🩹',n:'Ordinary tape',m:'Sticky, but it will not seal a breach.'},{i:'🔧',n:'Broken wrench',m:'Snapped in half.'}],
+  jars:[{i:'🧫',n:'Mold sample',m:'Better not touch it.'},{i:'💧',n:'Distilled water',m:'Pure water. Nothing else.'},{i:'🪨',n:'Martian rock',m:'Pretty, but useless.'},{i:'🧂',n:'Mineral salts',m:'Unlabeled salts.'},{i:'🫙',n:'Empty jar',m:'Empty.'},{i:'🦠',n:'Unknown culture',m:'It moves a little… leave it.'},{i:'❄️',n:'Expired coolant',m:'Evaporated: it no longer cools anything.'},{i:'🧊',n:'Dry ice',m:'Melts fast. Not usable coolant.'}]
+};
+const ACH = {
+  first_aid:{e:'🩹',n:'First Aid',d:'Complete your first repair.'},
+  dark:     {e:'🔦',n:'In the Dark',d:'Spend 30 seconds in total in a blackout.'},
+  alpha:    {e:'🐺',n:'Alpha Survivor',d:'Survive all 5 days.'},
+  ghost:    {e:'👻',n:'Ghost',d:'Successfully hide from MARS-X.'},
+  runner:   {e:'🏃',n:'Sprinter',d:'Escape from MARS-X to another room.'},
+  statue:   {e:'🗿',n:'Statue',d:'Stay frozen while MARS-X prowls through your room.'},
+  engineer: {e:'🔧',n:'Mars Engineer',d:'Complete 10 repairs in one run.'},
+  clean:    {e:'🧼',n:'Not a Scratch',d:'Win without being chased even once.'},
+  sealer:   {e:'🚨',n:'Sealer',d:'Seal an airlock breach.'},
+  breath:   {e:'🫁',n:'Last Breath',d:'Win after oxygen dropped below 10%.'},
+  book:     {e:'📚',n:'Lab Rat',d:'Read the repair manual.'},
+  charged:  {e:'🔋',n:'Fully Charged',d:'Recharge your flashlight 3 times in one run.'},
+  tragic:   {e:'🕳',n:'End of the Line',d:'Live the tragic airlock ending.'},
+  keys:     {e:'🗝',n:'All-Rounder',d:'Fix all 5 sabotage types in a single run.'},
+  hoarder:  {e:'🎒',n:'Hoarder',d:'Stash 3 useless items in your inventory.'}
+};
+const ENDINGS = {
+  rescue:  {t:'SUCCESSFUL RESCUE',c:'#39ff88',win:true, h:'Survive 5 days keeping the lights under control.', x:'The rescue ship lands beside Jezero-7. Between emergency lights and a base still standing, you climb aboard. Behind you, MARS-X fades into the red dunes… for now. Mission accomplished.'},
+  dark:    {t:'SURVIVAL IN THE DARK',c:'#ffb800',win:true, h:'Survive 5 days after too long in blackouts or with a dead flashlight.', x:'You spent so many hours in the dark that your eyes no longer miss the sun. The rescue crew finds you gripping a flashlight, staring at the shadows. You survived, but you will never sleep with the lights off again.'},
+  airlock: {t:'TRAGIC END AT THE AIRLOCK',c:'#ff3b4e',win:false,h:'Lose the base to a breach, or get caught in the airlock.', x:'The breach opened and the airlock lost pressure. Silence was the last thing you heard as the vacuum emptied the habitat. The rescue signal arrived… at a silent base.'},
+  captured:{t:'CAPTURED BY MARS-X',c:'#ff2bd6',win:false, h:'Get caught during a chase.', x:'Two red eyes in the dark. A click, and it is over. The rescue ship will only find an open locker and claw marks on the metal.'},
+  collapse:{t:'SYSTEMS COLLAPSE',c:'#ff8a3d',win:false,  h:'Let the crisis bar reach zero.', x:'Oxygen, power and temperature failed in cascade. The habitat shut down piece by piece. MARS-X never had to touch you: the base did the rest.'}
+};
+
+/* ============ SAVE ============ */
+let saved = {ach:{},end:{}};
+try{ const s=JSON.parse(localStorage.getItem('marsx_save')); if(s) saved={ach:s.ach||{},end:s.end||{}}; }catch(e){}
+function persist(){ try{localStorage.setItem('marsx_save',JSON.stringify(saved));}catch(e){} }
+function toast(m){ const d=document.createElement('div'); d.className='toast'; d.textContent=m; $('toast').appendChild(d); setTimeout(()=>d.remove(),3800); }
+function unlock(id){ if(saved.ach[id]) return; saved.ach[id]=Date.now(); if(G) G.newAch.push(id); persist(); toast('🏆 Achievement: '+ACH[id].n); beep(880,.15,'square'); }
+// Only touch the DOM when the markup really changed, so a click is never lost to a re-render.
+function setHTML(el,h){ if(el._h!==h){ el._h=h; el.innerHTML=h; } }
+
+/* ============ AUDIO ============ */
+let AC=null, muted=false;
+function beep(f=440,d=.12,type='sine',v=.05){
+  if(muted) return;
+  try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(),g=AC.createGain(); o.type=type;o.frequency.value=f;g.gain.value=v;
+    o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+
+/* ============ STATE ============ */
+let G=null, scr='menu', last=0, mouse={x:480,y:200}, cuMouse={x:320,y:180};
+const keys={left:false,right:false};
+function show(id){ scr=id; document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); }
+function mkItem(k){ return {id:k,n:ITEMS[k].name,i:ITEMS[k].icon}; }
+function newGame(){
+  G={day:1,dayT:0,time:0,o2:85,pow:85,temp:50,tdir:1,crisis:100,noise:0,room:'control',inv:[],sel:-1,sabs:[],pending:{},jam:null,
+     action:null,chase:null,chaseCd:20,nextSab:12,darkT:0,blindT:0,buff:false,buffDay:0,log:[],over:false,paused:false,dirty:true,newAch:[],
+     fixedTypes:{},px:480,face:1,walk:0,moving:false,target:null,autoDoor:null,autoFurn:null,trans:null,mvBtn:0,ptrT:-99,search:null,emptied:{},fur:{},ctxKey:'',
+     batt:100,spare:1,flash:true,wasNight:false,teleT:0,trkT:0,
+     alien:{room:'airlock',t:12,prowl:null,cool:0},
+     stats:{repairs:0,chases:0,hides:0,flees:0,minO2:100,manual:false,junk:0,recharges:0,evaded:0}};
+  for(const r in ROOMS){ G.fur[r]={}; FURNS.forEach(f=>{ G.fur[r][f]=DECOYS[f].slice().sort(()=>Math.random()-.5).slice(0,6); }); }
+  placeBatteries(5);
+  log('Day 1 · Jezero-7 habitat online. MARS-X is awake.','i');
+  log('Stand in front of furniture and press E to search it. The Lab manual says where each part is kept.','i');
+  keys.left=keys.right=false;
+  ['chase','manual','pauseOv','close'].forEach(i=>$(i).hidden=true); $('bNotes').hidden=true;
+  show('game');
+}
+function log(m,c=''){ G.log.unshift({m,c}); if(G.log.length>40) G.log.pop(); G.dirty=true; }
+const hasS = t => G.sabs.some(s=>s.type===t);
+const hasItem = k => G.inv.some(o=>o.id===k);
+const isNight = () => G.dayT/DAY_LEN >= NIGHT_AT;
+const blackout = () => hasS('lights') || G.pow<=0;
+const isDark = () => !!G && (blackout() || isNight());
+const lit = () => G.flash && G.batt>0;
+const nearDoor = () => ROOMS[G.room].doors.find(d=>Math.abs(G.px-d.x)<55);
+const nearStation = () => ROOMS[G.room].stations.find(s=>Math.abs(G.px-s.x)<75);
+const nearFurn = () => FURN.find(f=>Math.abs(G.px-f.x)<=45);
+const busy = () => !!G.action||!!G.chase||!!G.trans||!!G.search;
+
+/* ============ FLASHLIGHT ============ */
+function placeBatteries(n){
+  let tries=0;
+  while(n>0 && tries++<80){
+    const r=pick(Object.keys(ROOMS)), f=pick(FURNS), slot=Math.floor(Math.random()*6);
+    if(G.fur[r][f][slot].batt) continue;
+    let clash=false;
+    for(const k in G.pending){ const p=G.pending[k]; if(!p.found&&ITEMS[k].src===r&&p.furn===f&&p.slot===slot) clash=true; }
+    if(clash) continue;
+    G.fur[r][f][slot]=BATTERY; delete G.emptied[r+f+slot]; n--;
+  }
+}
+function toggleFlash(){
+  if(!G||G.over||G.paused) return;
+  if(G.batt<=0){ log('🔦 The flashlight is dead. Recharge it with a battery [R].','w'); beep(120,.12,'square'); return; }
+  G.flash=!G.flash; beep(G.flash?700:400,.05,'square',.04); G.dirty=true;
+}
+function recharge(){
+  if(!G||G.over||G.paused) return;
+  if(G.spare<=0){ log('🔋 No spare batteries. Search the cabinets, shelves and jars.','w'); beep(120,.12,'square'); return; }
+  if(G.batt>=95){ log('🔦 The flashlight is already charged.'); return; }
+  G.spare--; G.batt=100; G.flash=true; G.stats.recharges++;
+  if(G.stats.recharges>=3) unlock('charged');
+  log('🔋 Flashlight recharged to 100%. Spare batteries left: '+G.spare+'.','g'); beep(760,.15,'triangle'); G.dirty=true;
+}
+
+/* ============ ACTIONS ============ */
+function startAction(label,dur,noise,done,isRepair){
+  if(busy()) return;
+  if(G.buff && isRepair){ dur*=.55; G.buff=false; log('Your manual reading speeds up the repair.','g'); }
+  G.action={label,t:0,dur,done}; G.noise=clamp(G.noise+noise,0,100); G.dirty=true;
+}
+function cancelAction(){ if(G.action){ G.action=null; G.dirty=true; } }
+function enterDoor(d){
+  if(!G||G.over||G.chase||G.trans||G.search||G.paused) return;
+  if(G.jam===d.to){ log('🔒 The door to '+ROOMS[d.to].name+' is jammed.','w'); beep(120,.2,'square'); return; }
+  cancelAction(); G.noise=clamp(G.noise+4,0,100);
+  G.trans={to:d.to,from:G.room,t:0,dur:.6}; beep(300,.1,'square'); G.dirty=true;
+}
+function arrival(from){
+  const b=ROOMS[G.room].doors.find(d=>d.to===from);
+  if(b){ G.px=b.x<=480?b.x+75:b.x-75; G.face=b.x<=480?1:-1; }
+  G.target=null; G.autoDoor=null; G.autoFurn=null;
+}
+function repair(s){
+  const it=SAB[s.type].item;
+  if(!hasItem(it)){ log('You are missing the part: '+ITEMS[it].icon+' '+ITEMS[it].name+'.','w'); return; }
+  startAction('Repairing: '+SAB[s.type].name+'…',2.8,12,()=>{
+    if(!G.sabs.includes(s)) return;
+    const idx=G.inv.findIndex(o=>o.id===it);
+    if(idx<0){ log('You are missing the part.','w'); return; }
+    G.inv.splice(idx,1); delete G.pending[it]; G.sel=-1;
+    G.sabs.splice(G.sabs.indexOf(s),1);
+    if(s.type==='oxygen') G.o2=Math.max(G.o2,70);
+    if(s.type==='temp') G.temp=50;
+    if(s.type==='door') G.jam=null;
+    if(s.type==='breach'){ G.o2=clamp(G.o2+10,0,100); unlock('sealer'); }
+    G.crisis=clamp(G.crisis+12,0,100);
+    G.stats.repairs++; G.fixedTypes[s.type]=1;
+    unlock('first_aid'); if(G.stats.repairs>=10) unlock('engineer');
+    if(Object.keys(G.fixedTypes).length>=5) unlock('keys');
+    log('✔ Repaired: '+SAB[s.type].name+'.','g'); beep(520,.2,'triangle');
+  },true);
+}
+function actionsFor(){
+  const b=busy(), a=[];
+  const st=nearStation();
+  if(st){
+    // Repairs first: the required part is taken from the inventory automatically.
+    G.sabs.forEach(s=>{
+      const d=SAB[s.type]; if(d.room!==G.room||d.st!==st.id) return;
+      const it=ITEMS[d.item], ok=hasItem(d.item);
+      a.push({t:d.icon+' Repair: '+d.name,rep:true,st:true,en:!b&&ok,fn:()=>repair(s),
+        s:ok?'[E] · uses '+it.icon+' '+it.name+' from your inventory':'Missing: '+it.icon+' '+it.name+' (stored in '+ROOMS[it.src].short+')'});
+    });
+    if(st.id==='console') a.push({t:'🔇 Dampen sound',st:true,s:'Reduces noise (−35) · 3.5 s',en:!b,fn:()=>startAction('Dampening sound…',3.5,0,()=>{G.noise=clamp(G.noise-35,0,100);log('Noise reduced.','g');})});
+    if(st.id==='moxie') a.push({t:'🌱 Calibrate MOXIE',st:true,s:hasS('oxygen')?'Unregulated: repair it first':'+28 oxygen · 3 s',en:!b&&!hasS('oxygen'),fn:()=>startAction('Calibrating MOXIE…',3,8,()=>{G.o2=clamp(G.o2+28,0,100);log('Oxygen stabilized (+28).','g');})});
+    if(st.id==='gen') a.push({t:'⚡ Restart generator',st:true,s:'+35 power · 3.5 s · noisy',en:!b,fn:()=>startAction('Restarting generator…',3.5,14,()=>{G.pow=clamp(G.pow+35,0,100);log('Power restored (+35).','g');})});
+    if(st.id==='panel') a.push({t:'🌬 Vent room',st:true,s:hasS('temp')?'Overload: repair first':'Brings temperature back to ideal',en:!b&&!hasS('temp'),fn:()=>startAction('Venting…',3,8,()=>{G.temp+=(50-G.temp)*.65;log('Temperature normalized.','g');})});
+    if(st.id==='bench') a.push({t:'📖 Read manual',st:true,s:'Unlocks Notes · next repair is faster',en:!b,fn:()=>startAction('Reading the manual…',3,3,()=>{
+      G.stats.manual=true; $('bNotes').hidden=false; unlock('book');
+      if(G.buffDay!==G.day){ G.buff=true; G.buffDay=G.day; }
+      log('📖 Manual read: open «Notes» whenever you want.','i'); openManual();
+    })});
+  }
+  const fn=nearFurn();
+  if(fn) a.push({t:'🔍 Search '+FNAME[fn.f],s:'[E] · opens a close-up view of the inside',en:!b,fn:()=>openCloseup(fn.f)});
+  const dn=nearDoor();
+  if(dn) a.push({t:'🚪 Enter '+ROOMS[dn.to].short,s:G.jam===dn.to?'🔒 Door jammed':'[E] · some noise',en:!b&&G.jam!==dn.to,fn:()=>enterDoor(dn)});
+  return a;
+}
+// E / ✋ button: use whatever is closest to the player.
+function interact(){
+  if(!G||G.over||G.paused||G.chase||G.trans||G.search) return;
+  const c=[];
+  const d=nearDoor(); if(d) c.push({dist:Math.abs(G.px-d.x),fn:()=>enterDoor(d)});
+  const f=nearFurn(); if(f) c.push({dist:Math.abs(G.px-f.x),fn:()=>openCloseup(f.f)});
+  const st=nearStation();
+  if(st){ const sa=actionsFor().filter(a=>a.st); const act=sa.find(a=>a.rep&&a.en)||sa.find(a=>!a.rep&&a.en)||sa.find(a=>a.rep);
+    if(act) c.push({dist:Math.abs(G.px-st.x),fn:act.en?act.fn:()=>{ log(act.t+' — '+act.s,'w'); beep(120,.12,'square'); }}); }
+  if(!c.length){ log('Nothing to interact with here. Walk up to a door, station or furniture.'); return; }
+  c.sort((a,b)=>a.dist-b.dist)[0].fn();
+}
+
+/* ============ FURNITURE CLOSE-UP ============ */
+function getLayout(room,f){
+  const lay=G.fur[room][f].map((o,i)=>G.emptied[room+f+i]?null:Object.assign({},o));
+  for(const k in G.pending){ const p=G.pending[k];
+    if(!p.found&&ITEMS[k].src===room&&p.furn===f&&!G.emptied[room+f+p.slot]) lay[p.slot]={real:k,i:ITEMS[k].icon,n:ITEMS[k].name,m:ITEMS[k].name+': exactly what you need!'};
+  }
+  return lay;
+}
+function openCloseup(f){
+  if(!G||G.over||G.chase||G.trans||G.paused||G.alien.prowl) return;
+  cancelAction(); G.noise=clamp(G.noise+3,0,100);
+  G.search={f,sel:-1,hover:-1}; keys.left=keys.right=false; G.mvBtn=0; G.target=null; G.autoFurn=null; G.autoDoor=null;
+  $('close').hidden=false;
+  $('cuTitle').textContent=FNAME[f]+' · '+ROOMS[G.room].name;
+  $('cuInfo').innerHTML='Click an item to inspect it. Click it again (or press <b>✋ Take</b>) to grab it.'; $('cuTake').disabled=true; G.dirty=true;
+}
+function closeSearch(){ if(G) G.search=null; $('close').hidden=true; if(G) G.dirty=true; }
+function slotsFor(f){
+  const s=[];
+  if(f==='cabinet'){ for(let r=0;r<2;r++) for(let c=0;c<3;c++) s.push({x:50+c*180,y:40+r*150,w:160,h:130}); }
+  else if(f==='shelf'){ for(let r=0;r<3;r++) for(let c=0;c<2;c++) s.push({x:90+c*250,y:30+r*105,w:200,h:85}); }
+  else { for(let r=0;r<2;r++) for(let c=0;c<3;c++) s.push({x:60+c*180,y:50+r*150,w:140,h:130}); }
+  return s;
+}
+function cuSlotAt(x,y){ const sl=slotsFor(G.search.f); return sl.findIndex(s=>x>=s.x&&x<=s.x+s.w&&y>=s.y&&y<=s.y+s.h); }
+function cuPoint(e){ const r=$('cu').getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width*640,y:(e.clientY-r.top)/r.height*360}; }
+function cuSelect(i){
+  const s=G.search; s.sel=i; if(i<0) return;
+  const o=getLayout(G.room,s.f)[i];
+  G.noise=clamp(G.noise+1,0,100);
+  if(!o){ $('cuInfo').innerHTML='<b>Empty</b> compartment.'; $('cuTake').disabled=true; }
+  else { $('cuInfo').innerHTML='<b>'+o.i+' '+o.n+'</b><br>'+o.m+'<br><span style="color:var(--dim)">Click it again to take it.</span>'; $('cuTake').disabled=false; }
+  beep(420,.05,'square',.03);
+}
+function cuClick(i){
+  const s=G.search; if(!s||i<0) return;
+  if(isDark()&&!lit()){ $('cuInfo').innerHTML='<b>Too dark.</b> Turn the flashlight on [F] or recharge it [R].'; beep(120,.1,'square'); return; }
+  if(s.sel===i && getLayout(G.room,s.f)[i]) cuTake(); else cuSelect(i);
+}
+function cuTake(){
+  const s=G.search; if(!s||s.sel<0) return;
+  const o=getLayout(G.room,s.f)[s.sel]; if(!o) return;
+  if(o.batt){
+    if(G.spare>=MAX_SPARE){ $('cuInfo').innerHTML='<b>You cannot carry more batteries</b> (max '+MAX_SPARE+'). Recharge first [R].'; beep(120,.15,'square'); return; }
+    G.emptied[G.room+s.f+s.sel]=true; G.spare++;
+    log('Found a 🔋 flashlight battery. Spares: '+G.spare+'.','g'); beep(660,.12,'square');
+    $('cuInfo').innerHTML='✔ You took a <b>🔋 Flashlight battery</b>. Press <b>R</b> to recharge.';
+  } else {
+    if(G.inv.length>=MAXINV){ $('cuInfo').innerHTML='<b>Inventory full.</b> Select a useless item in the top bar and drop it.'; beep(120,.15,'square'); return; }
+    G.emptied[G.room+s.f+s.sel]=true;
+    if(o.real){
+      G.pending[o.real].found=true; G.inv.push(mkItem(o.real));
+      log('Found: '+ITEMS[o.real].icon+' '+ITEMS[o.real].name+'. Take it to the broken station.','g'); beep(660,.12,'square');
+      $('cuInfo').innerHTML='✔ You took <b>'+o.i+' '+o.n+'</b>. It is in your inventory.';
+    } else {
+      G.inv.push({id:'junk',n:o.n,i:o.i,junk:true}); G.stats.junk++; G.noise=clamp(G.noise+2,0,100);
+      if(G.stats.junk>=3) unlock('hoarder');
+      log('You stashed '+o.n+'… it does not look useful.'); beep(200,.1,'square');
+      $('cuInfo').innerHTML='You stashed <b>'+o.i+' '+o.n+'</b>. Probably useless.';
+    }
+  }
+  s.sel=-1; $('cuTake').disabled=true; G.dirty=true;
+}
+function drawCloseup(t){
+  const c=cx, s=G.search, lay=getLayout(G.room,s.f), sl=slotsFor(s.f);
+  const r=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x|0,y|0,w|0,h|0); };
+  c.clearRect(0,0,640,360);
+  if(s.f==='cabinet'){
+    r(0,0,640,360,'#2a1c10'); r(20,10,600,340,'#4a3320'); r(20,10,600,6,'#6e4e30'); r(20,344,600,6,'#2e1f10');
+    sl.forEach(q=>{ r(q.x-6,q.y-6,q.w+12,q.h+12,'#6e4e30'); r(q.x,q.y,q.w,q.h,'#150d06'); r(q.x,q.y,q.w,10,'#0a0603'); });
+  } else if(s.f==='shelf'){
+    r(0,0,640,360,'#14172a'); r(60,10,520,340,'#242840'); r(60,10,8,340,'#3a3f5a'); r(572,10,8,340,'#3a3f5a');
+    sl.forEach(q=>{ r(q.x-20,q.y,q.w+40,q.h,'#0c0f1c'); });
+    for(let i=0;i<3;i++){ r(68,30+i*105+85,504,10,'#6b5a3a'); r(68,30+i*105+93,504,3,'#3a2f1c'); }
+  } else {
+    r(0,0,640,360,'#0c1226'); r(0,300,640,60,'#3a3f56'); r(0,296,640,8,'#5a6080');
+    sl.forEach(q=>{ r(q.x+30,q.y-4,80,16,'#8a8f9c'); r(q.x+20,q.y+12,100,118,'rgba(150,220,255,.14)');
+      c.strokeStyle='rgba(180,230,255,.5)'; c.lineWidth=3; c.strokeRect(q.x+20,q.y+12,100,118); r(q.x+30,q.y+112,80,16,'rgba(150,220,255,.22)'); });
+  }
+  c.textAlign='center'; c.textBaseline='middle'; c.font='54px serif'; c.fillStyle='#fff';
+  sl.forEach((q,i)=>{ const o=lay[i]; if(!o) return; c.fillText(o.i,q.x+q.w/2,q.y+q.h/2+4); });
+  sl.forEach((q,i)=>{
+    if(i===s.sel){ c.strokeStyle='#00f0ff'; c.lineWidth=4; c.strokeRect(q.x,q.y,q.w,q.h); }
+    else if(i===s.hover){ c.strokeStyle='rgba(255,255,255,.45)'; c.lineWidth=2; c.strokeRect(q.x,q.y,q.w,q.h); }
+  });
+  if(isDark()){
+    c.textAlign='left'; c.font='bold 12px "Courier New"';
+    if(lit()){
+      const rad=G.batt<20?70+10*Math.sin(t*20):100;
+      const g=c.createRadialGradient(cuMouse.x,cuMouse.y,8,cuMouse.x,cuMouse.y,rad);
+      g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(.6,'rgba(0,0,0,.6)'); g.addColorStop(1,'rgba(0,0,0,.985)');
+      c.fillStyle=g; c.fillRect(0,0,640,360);
+      c.fillStyle='#ffb800'; c.fillText('NO LIGHT: move the flashlight with your pointer',10,346);
+    } else {
+      c.fillStyle='rgba(0,0,0,.97)'; c.fillRect(0,0,640,360);
+      c.fillStyle='#ff3b4e'; c.fillText(G.batt<=0?'FLASHLIGHT DEAD — recharge with [R]':'FLASHLIGHT OFF — press [F]',10,346);
+    }
+  }
+}
+
+/* ============ SABOTAGES ============ */
+function spawnSab(){
+  const av=['oxygen','temp']; if(G.day>=2) av.push('lights','door'); if(G.day>=3) av.push('breach');
+  const free=av.filter(t=>!hasS(t)); if(!free.length) return;
+  const type=pick(free), s={type,age:0};
+  if(type==='door'){ s.target=pick(['greenhouse','machines','lab'].filter(r=>r!==G.room)); G.jam=s.target; }
+  if(type==='temp') G.tdir=Math.random()<.5?1:-1;
+  G.sabs.push(s);
+  const it=SAB[type].item;
+  if(!hasItem(it)&&!G.pending[it]){
+    const src=ITEMS[it].src; let furn=pick(FURNS), slot=Math.floor(Math.random()*6);
+    for(let i=0;i<12&&G.fur[src][furn][slot].batt;i++){ furn=pick(FURNS); slot=Math.floor(Math.random()*6); }
+    G.pending[it]={found:false,furn,slot}; delete G.emptied[src+furn+slot];
+  }
+  // MARS-X was physically there: the patrol continues from the sabotaged room.
+  const A=G.alien;
+  if(!A.prowl&&!G.chase&&SAB[type].room!==G.room){ A.room=SAB[type].room; A.t=rnd(4,7); }
+  log('⚠ '+SAB[type].msg+(type==='door'?' ('+ROOMS[s.target].name+')':''),'w');
+  beep(200,.35,'sawtooth',.06); G.dirty=true;
+}
+
+/* ============ MARS-X PATROL ============ */
+function stepToward(from,to){
+  const l=ROOMS[from].links;
+  if(l.includes(to)) return to;
+  const via=l.filter(r=>ROOMS[r].links.includes(to));
+  return via.length?pick(via):pick(l);
+}
+function startProwl(walkedIn){
+  const A=G.alien; if(G.chase||A.prowl||G.over) return;
+  closeSearch(); G.target=null; G.autoDoor=null; G.autoFurn=null;
+  const d=pick(ROOMS[G.room].doors), sx=d.x, ex=sx<480?900:60;
+  A.prowl={t:0,dur:rnd(4,5.5),det:walkedIn?.3:0,sx,ex};
+  log('👁 MARS-X is prowling through '+ROOMS[G.room].name+'. FREEZE!','w'); beep(90,.7,'sawtooth',.08); G.dirty=true;
+}
+function alienTick(dt){
+  const A=G.alien;
+  if(A.cool>0) A.cool-=dt;
+  if(G.chase) return;
+  if(A.prowl){
+    const p=A.prowl; p.t+=dt;
+    if(p.t>.7){
+      let r=0;
+      if(G.moving) r+=1.2;
+      if(G.action) r+=.5;
+      if(isDark()&&lit()) r+=.12;
+      if(G.noise>75) r+=.25;
+      p.det=clamp(p.det+(r>0?r:-.08)*dt,0,1);
+    }
+    if(p.det>=1){ A.prowl=null; startChase(); }
+    else if(p.t>=p.dur){
+      A.prowl=null; A.room=pick(ROOMS[G.room].links); A.t=rnd(PATROL[G.day-1][0],PATROL[G.day-1][1]); A.cool=10;
+      G.stats.evaded++; unlock('statue');
+      log('MARS-X did not notice you. It slips away to '+ROOMS[A.room].short+'.','g'); G.dirty=true;
+    }
+    return;
+  }
+  A.t-=dt;
+  if(A.t<=0){
+    const pt=PATROL[G.day-1]; A.t=rnd(pt[0],pt[1]);
+    const hunt=.3+.1*G.day+G.noise/250+(isDark()&&!lit()?.15:0);
+    let next=(A.room!==G.room&&Math.random()<hunt)?stepToward(A.room,G.room):pick(ROOMS[A.room].links);
+    if(next===G.room&&A.cool>0){ const o=ROOMS[A.room].links.filter(r=>r!==G.room); next=o.length?pick(o):A.room; }
+    A.room=next; G.dirty=true;
+    if(next===G.room&&!G.trans) startProwl(false);
+    else if(ROOMS[G.room].links.includes(next)) beep(70,.35,'sine',.07);
+  }
+}
+
+/* ============ CHASE ============ */
+function startChase(){
+  cancelAction(); closeSearch(); G.trans=null; G.target=null; G.autoDoor=null; G.autoFurn=null; G.mvBtn=0;
+  G.alien.prowl=null; G.alien.room=G.room;
+  G.chase={mode:'choose',t:0,limit:G.day>=4?6:8,el:0,lost:0,holding:false,seq:[],idx:0,ft:0};
+  G.stats.chases++; G.chaseCd=30;
+  log('🚨 MARS-X has found you in '+ROOMS[G.room].name+'!','w'); beep(110,.6,'sawtooth',.09);
+  $('chase').hidden=false; setChaseUI(); G.dirty=true;
+}
+function setChaseUI(){ const m=G.chase.mode; $('chChoose').hidden=m!=='choose'; $('chHide').hidden=m!=='hide'; $('chFlee').hidden=m!=='flee'; }
+function chooseHide(){ if(!G||!G.chase||G.chase.mode!=='choose') return; Object.assign(G.chase,{mode:'hide',el:0,lost:0,holding:false}); setChaseUI(); }
+function chooseFlee(){
+  if(!G||!G.chase||G.chase.mode!=='choose') return;
+  const sy=['↑','↓','←','→'], seq=[], n=G.day>=4?5:4; for(let i=0;i<n;i++) seq.push(pick(sy));
+  Object.assign(G.chase,{mode:'flee',seq,idx:0,ft:0}); setChaseUI(); renderSeq();
+}
+function renderSeq(){ const c=G.chase; $('seq').innerHTML=c.seq.map((s,i)=>'<span class="'+(i<c.idx?'ok':'')+'">'+s+'</span>').join(''); }
+function fleeKey(k){
+  const c=G&&G.chase; if(!c||c.mode!=='flee') return;
+  if(k===c.seq[c.idx]){ c.idx++; beep(600+c.idx*80,.06,'square'); renderSeq();
+    if(c.idx>=c.seq.length){
+      const opts=ROOMS[G.room].doors.filter(d=>d.to!==G.jam), d=pick(opts.length?opts:ROOMS[G.room].doors), from=G.room;
+      G.alien.room=from; G.room=d.to; arrival(from); G.stats.flees++; unlock('runner');
+      endChase('You escaped to '+ROOMS[d.to].name+'. MARS-X loses your trail.');
+    }
+  } else { c.idx=0; beep(110,.1,'square'); renderSeq(); }
+}
+function endChase(msg){
+  const A=G.alien; G.chase=null; G.noise=25; $('chase').hidden=true;
+  if(A.room===G.room) A.room=pick(ROOMS[G.room].links);
+  A.cool=12; A.t=rnd(6,9);
+  log(msg,'g'); G.dirty=true;
+}
+function chaseTick(dt){
+  const c=G.chase;
+  if(c.mode==='choose'){ c.t+=dt; if(c.t>=c.limit) return capture(); }
+  else if(c.mode==='hide'){
+    c.el+=dt; if(c.el>.8 && !c.holding){ c.lost+=dt; if(c.lost>.7) return capture(); }
+    if(c.el>=4){ G.stats.hides++; unlock('ghost'); endChase('You held your breath. MARS-X walks away.'); }
+  } else { c.ft+=dt; if(c.ft>=4.5) return capture(); }
+}
+function capture(){ endGame(G.room==='airlock'?'airlock':'captured'); }
+
+/* ============ TICK ============ */
+function nextDay(){
+  G.day++; G.dayT=0; G.wasNight=false;
+  if(G.day>5) return win();
+  placeBatteries(2);
+  G.noise=Math.min(G.noise,15); log('☀ Sunrise of day '+G.day+'. MARS-X grows more aggressive. New supplies were stowed in the furniture.','i'); beep(700,.3,'triangle');
+}
+function win(){
+  unlock('alpha'); if(G.stats.chases===0) unlock('clean'); if(G.stats.minO2<10) unlock('breath');
+  endGame((G.darkT>=45||G.blindT>=20)?'dark':'rescue');
+}
+function tick(dt){
+  G.time+=dt; G.dayT+=dt;
+  if(G.dayT>=DAY_LEN){ nextDay(); if(G.over) return; }
+  const nt=isNight();
+  if(nt!==G.wasNight){ G.wasNight=nt; G.dirty=true;
+    if(nt){ log('🌙 Night falls on Jezero. Base lights drop to minimum: use your flashlight.','w'); beep(160,.4,'sine',.06); } }
+  // life support
+  G.o2 -= (0.2 + (hasS('oxygen')?1.1:0) + (hasS('breach')?0.6:0))*dt;
+  G.pow -= (0.18+(nt?.05:0))*dt;
+  G.temp += (hasS('temp')? G.tdir*2.0 : (nt?-.22:.1))*dt;
+  G.o2=clamp(G.o2,0,100); G.pow=clamp(G.pow,0,100); G.temp=clamp(G.temp,0,100);
+  G.stats.minO2=Math.min(G.stats.minO2,G.o2);
+  // darkness and flashlight battery
+  const dk=isDark();
+  if(blackout()){ G.darkT+=dt; if(G.darkT>=30) unlock('dark'); }
+  if(dk){
+    if(lit()){
+      const before=G.batt; G.batt=Math.max(0,G.batt-BATT_DRAIN*dt);
+      if(before>20&&G.batt<=20){ log('🔦 Flashlight battery low (20%).','w'); beep(300,.2,'square'); }
+      if(before>0&&G.batt<=0){ log('🔦 The flashlight died! Recharge it [R] or find batteries in the furniture.','w'); beep(100,.5,'sawtooth',.08); G.dirty=true; }
+    } else { G.blindT+=dt; G.noise=clamp(G.noise+1.2*dt,0,100); }   // stumbling around blind is loud
+  }
+  // sabotages
+  G.nextSab-=dt;
+  if(G.nextSab<=0){ if(G.sabs.length<MAXC[G.day-1]) spawnSab(); const iv=INTV[G.day-1]; G.nextSab=rnd(iv[0],iv[1]); }
+  G.sabs.forEach(s=>s.age+=dt);
+  if(G.chaseCd>0) G.chaseCd-=dt;
+  G.noise=clamp(G.noise-2.2*dt+0.5*G.sabs.length*dt,0,100);
+  let d=0;
+  G.sabs.forEach(s=>{ if(s.age>8) d-=.55; });
+  if(G.o2<20) d-=.9; if(G.pow<12) d-=.7; if(G.temp>88||G.temp<12) d-=.8;
+  if(dk&&!lit()) d-=.25;
+  if(d===0&&G.sabs.length===0) d=.35;
+  G.crisis=clamp(G.crisis+d*dt,0,100);
+  if(G.crisis<=0) return endGame(hasS('breach')?'airlock':'collapse');
+  // MARS-X
+  alienTick(dt);
+  if(!G.chase&&!G.alien.prowl){
+    if(G.noise>=100){ if(G.chaseCd<=0) startChase(); else G.noise=95; }
+    else { const s=G.sabs.find(s=>s.age>22); if(s&&G.chaseCd<=0){ s.age=8; startChase(); } }
+  }
+  // side-scrolling movement
+  const kd=(keys.left?-1:0)+(keys.right?1:0);
+  let dir=G.mvBtn||kd;
+  if(dir){ G.target=null; G.autoDoor=null; G.autoFurn=null; }
+  if(!dir&&G.target!=null&&!G.chase&&!G.search&&!G.trans){
+    const df=G.target-G.px;
+    if(Math.abs(df)<8){
+      G.target=null;
+      const dd=G.autoDoor, ff=G.autoFurn; G.autoDoor=null; G.autoFurn=null;
+      if(dd) enterDoor(dd); else if(ff) openCloseup(ff);
+    } else dir=Math.sign(df);
+  }
+  if(dir&&!G.chase&&!G.search&&!G.trans){
+    if(G.action) cancelAction();
+    G.px=clamp(G.px+dir*SPEED*dt,30,930); G.face=dir; G.walk+=dt*11; G.moving=true;
+    G.noise=clamp(G.noise+.9*dt,0,100);
+  } else G.moving=false;
+  if(G.trans){
+    G.trans.t+=dt;
+    if(G.trans.t>=G.trans.dur){
+      const tr=G.trans; G.trans=null;
+      if(G.jam===tr.to) log('🔒 The door jammed right before you got in.','w');
+      else {
+        const A=G.alien;
+        if(A.prowl){ A.prowl=null; A.t=rnd(3,5); A.cool=6; log('You slipped out before MARS-X spotted you.','g'); }
+        G.room=tr.to; arrival(tr.from); log('You enter '+ROOMS[tr.to].name+'.');
+        if(A.room===G.room&&!G.chase) startProwl(true);
+      }
+      G.dirty=true;
+    }
+  }
+  if(G.action){ G.action.t+=dt; if(G.action.t>=G.action.dur){ const a=G.action; G.action=null; a.done(); G.dirty=true; } }
+  if(G.chase) chaseTick(dt);
+}
+
+/* ============ END ============ */
+function endGame(key){
+  if(G.over) return; G.over=true; G.chase=null; G.alien.prowl=null; $('chase').hidden=true; closeSearch();
+  const e=ENDINGS[key]; saved.end[key]=1; if(key==='airlock') unlock('tragic'); persist();
+  const sc=G.stats.repairs*6+G.crisis*.5+(G.stats.chases===0?20:0);
+  const grade=!e.win?'—':sc>=75?'S':sc>=55?'A':sc>=35?'B':'C';
+  const st=G.stats;
+  $('endBox').innerHTML=
+    '<div class="px" style="color:'+e.c+';font-size:11px">'+(e.win?'MISSION COMPLETE':'MISSION FAILED')+'</div>'+
+    '<h1 style="color:'+e.c+'">'+e.t+'</h1>'+
+    (e.win?'<div class="grade">'+grade+'</div>':'')+
+    '<div class="txt">'+e.x+'</div>'+
+    '<div class="stats"><div>Day reached<b>'+Math.min(G.day,5)+'/5</b></div><div>Repairs<b>'+st.repairs+'</b></div><div>Chases<b>'+st.chases+'</b></div><div>Prowls evaded<b>'+st.evaded+'</b></div><div>Hides<b>'+st.hides+'</b></div><div>Escapes<b>'+st.flees+'</b></div><div>Recharges<b>'+st.recharges+'</b></div><div>Blackout time<b>'+Math.round(G.darkT)+' s</b></div></div>'+
+    (G.newAch.length?'<div style="margin:10px 0;color:var(--am)">🏆 New achievements:<br>'+G.newAch.map(i=>ACH[i].e+' '+ACH[i].n).join(' · ')+'</div>':'')+
+    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px"><button class="btn" id="eAgain">↻ Play again</button><button class="btn mg" id="eAch">🏆 Achievements</button><button class="btn" id="eMenu">Menu</button></div>';
+  $('endBox').style.borderColor=e.c;
+  $('eAgain').onclick=newGame; $('eAch').onclick=showAch; $('eMenu').onclick=()=>show('menu');
+  beep(e.win?880:90,.6,e.win?'triangle':'sawtooth',.08);
+  show('end');
+}
+function showAch(){
+  const ids=Object.keys(ACH), n=ids.filter(i=>saved.ach[i]).length;
+  const ek=Object.keys(ENDINGS), en=ek.filter(k=>saved.end[k]).length;
+  $('achCount').textContent=n+' / '+ids.length+' achievements · '+en+' / '+ek.length+' endings';
+  $('achGrid').innerHTML=ids.map(i=>'<div class="ach '+(saved.ach[i]?'on':'')+'"><div class="em">'+(saved.ach[i]?ACH[i].e:'❔')+'</div><div><b>'+ACH[i].n+'</b><span>'+ACH[i].d+'</span></div></div>').join('');
+  $('endGrid').innerHTML=ek.map((k,i)=>'<div class="endCard '+(saved.end[k]?'on':'')+'"><b>'+(i+1)+'. '+(saved.end[k]?ENDINGS[k].t:'??? (locked)')+'</b>'+ENDINGS[k].h+'</div>').join('');
+  show('achv');
+}
+function openManual(){
+  let h='<tr><th>Fault</th><th>Repaired at</th><th>Part</th><th>Part is stored in</th></tr>';
+  for(const k in SAB){ const s=SAB[k], it=ITEMS[s.item]; h+='<tr><td>'+s.icon+' '+s.name+'</td><td>'+ROOMS[s.room].short+'</td><td>'+it.icon+' '+it.name+'</td><td>'+ROOMS[it.src].short+'</td></tr>'; }
+  h+='<tr><td colspan="4" style="color:var(--dim)">Jammed doors: take another route. Lights go out across the whole base. 🔋 Batteries can be in any furniture.</td></tr>';
+  $('manTable').innerHTML=h; $('manual').hidden=false; if(G) G.paused=true;
+}
+
+/* ============ NASA TELEMETRY (simulated) ============ */
+function telemetry(){
+  const hrs=6+(G.dayT/DAY_LEN)*20, T=G.time;                       // local hours since midnight (06:00 → 02:00)
+  const air=-51+29*Math.cos((hrs-14)/24*2*Math.PI)+Math.sin(T*.7)*1.2;   // approx. -22 °C afternoon, -80 °C night
+  const pres=735+22*Math.sin(hrs/24*2*Math.PI+1)+Math.sin(T*.9)*3;       // Pa (Jezero sits around 700-780 Pa)
+  const wind=5.5+3*Math.sin(T*.13)+1.2*Math.sin(T*.71);
+  const tau=.55+.12*Math.sin(T*.05+G.day);
+  const sun=hrs<18?Math.max(0,Math.sin((hrs-6)/12*Math.PI)):0;
+  const uv=sun>.7?'HIGH':sun>.3?'MODERATE':sun>0?'LOW':'NONE (night)';
+  const fault=hasS('oxygen'), rate=fault?0:Math.max(0,6+3*G.pow/100+Math.sin(T*.5)*.4)*(G.pow<=0?0:1);
+  const mox=fault?'FAULT':G.pow<=0?'NO POWER':'NOMINAL';
+  const cell=(l,v,c)=>'<div class="tl '+(c||'')+'">'+l+'<b>'+v+'</b></div>';
+  return cell('MISSION SOL / SITE','Sol '+G.day+' · 18.44°N 77.45°E')+
+    cell('AIR TEMPERATURE',air.toFixed(1)+' °C',air<-70?'am':'')+
+    cell('ATMOSPHERIC PRESSURE',pres.toFixed(0)+' Pa ('+(pres/100).toFixed(2)+' mbar)')+
+    cell('WIND SPEED',wind.toFixed(1)+' m/s')+
+    cell('DUST OPACITY (TAU)',tau.toFixed(2),tau>.63?'am':'')+
+    cell('UV RADIATION',uv,sun>.7?'am':'')+
+    cell('ATMOSPHERE','CO₂ 95% · gravity 3.71 m/s²')+
+    cell('MOXIE GENERATOR',mox+' · '+rate.toFixed(1)+' g O₂/h',mox==='NOMINAL'?'':'warn')+
+    cell('MOXIE REFERENCE','Real unit peaked at 12 g O₂/h','am');
+}
+
+/* ============ UI ============ */
+function alienVisible(){ const A=G.alien; return A.room===G.room||ROOMS[G.room].links.includes(A.room); }
+function buildPlan(){
+  let s='<svg viewBox="0 0 100 100">'; const done={}; const A=G.alien, av=alienVisible();
+  for(const k in ROOMS) for(const l of ROOMS[k].links){ const key=[k,l].sort().join(); if(done[key]) continue; done[key]=1; const a=ROOMS[k],b=ROOMS[l];
+    s+='<line class="'+((G.jam===k||G.jam===l)?'jam':'')+'" x1="'+a.mx+'" y1="'+a.my+'" x2="'+b.mx+'" y2="'+b.my+'"/>'; }
+  for(const k in ROOMS){ const r=ROOMS[k];
+    const cls=['node']; if(G.room===k) cls.push('cur'); else if(ROOMS[G.room].links.includes(k)) cls.push('go'); if(G.jam===k) cls.push('jam');
+    if(av&&A.room===k&&G.room!==k) cls.push('alien');
+    s+='<g class="'+cls.join(' ')+'"><rect x="'+(r.mx-15)+'" y="'+(r.my-8)+'" width="30" height="16" rx="1.5"/><text x="'+r.mx+'" y="'+(r.my+1.2)+'">'+r.short+'</text>';
+    if(G.room===k) s+='<text x="'+r.mx+'" y="'+(r.my+6)+'" style="fill:#00f0ff;font-size:3px">▶ YOU</text>';
+    s+='</g>';
+    let ic=''; G.sabs.forEach(sb=>{ const d=SAB[sb.type]; const rm=sb.type==='door'?sb.target:d.room; if(rm===k) ic+=d.icon; });
+    if(ic) s+='<text class="ic" x="'+(r.mx+10)+'" y="'+(r.my-9)+'">'+ic+'</text>';
+    if(av&&A.room===k) s+='<text class="ic" x="'+(r.mx-10)+'" y="'+(r.my-9)+'">👾</text>';
+  }
+  return s+'</svg>';
+}
+function rebuild(){
+  const A=G.alien;
+  setHTML($('plan'),buildPlan()); $('planWrap').classList.toggle('dim',isDark()&&!lit());
+  const trk=$('trk'), hot=alienVisible();
+  trk.classList.toggle('hot',hot);
+  trk.textContent=A.room===G.room?'👾 MARS-X IS IN THIS ROOM':hot?'👾 Movement next door: '+ROOMS[A.room].short:'Tracker: no movement nearby';
+  setHTML($('alerts'),G.sabs.length?G.sabs.map(sb=>'<div class="alert"><span>'+SAB[sb.type].icon+' '+SAB[sb.type].name+'<br><small style="color:var(--dim)">Repair at: '+ROOMS[SAB[sb.type].room].short+' · Part: '+ITEMS[SAB[sb.type].item].icon+' '+(hasItem(SAB[sb.type].item)?'in inventory ✔':'in '+ROOMS[ITEMS[SAB[sb.type].item].src].short)+(sb.type==='door'?' · Jammed: '+ROOMS[sb.target].short:'')+'</small></span><div class="bar"><i></i></div></div>').join(''):'<div class="none">No alerts. MARS-X is lurking…</div>');
+  // contextual actions
+  const st=nearStation(), dn=nearDoor(), fn=nearFurn();
+  $('ctx').textContent=st?'📍 At: '+st.icon+' '+st.name:fn?'📍 In front of the '+FNAME[fn.f]:dn?'📍 At the door to '+ROOMS[dn.to].short:'📍 Walk up to a station, furniture or door.';
+  const acts=actionsFor();
+  setHTML($('actions'),acts.length?acts.map((a,i)=>'<button class="act'+(a.rep?' rep':'')+'" data-a="'+i+'"'+(a.en?'':' disabled')+'>'+a.t+'<span class="s">'+a.s+'</span></button>').join(''):'<div class="none">Nothing within reach.</div>');
+  // top inventory bar
+  const dk=isDark(), dead=G.batt<=0, on=lit()&&dk;
+  let h='<button class="islot fixed'+(G.batt<=20?' low':'')+'" data-act="flash" title="Toggle flashlight (F)"><div class="ic">🔦</div><small>Flashlight [F] · <span id="battTxt"></span></small>'+
+        '<small class="st '+(dead?'dead':on?'on':'')+'">'+(dead?'DEAD':!G.flash?'OFF':on?'ON · draining':'ready')+'</small><div class="bar"><i id="battBar"></i></div></button>';
+  h+='<button class="islot fixed" data-act="recharge" title="Recharge flashlight (R)"><div class="ic">🔋</div><small>Batteries × '+G.spare+'</small><small class="st '+(G.spare?'on':'')+'">'+(G.spare?'[R] Recharge':'find more')+'</small></button>';
+  for(let i=0;i<MAXINV;i++){ const o=G.inv[i];
+    h+=o?'<button class="islot item'+(i===G.sel?' sel':'')+(o.junk?' junk':'')+'" data-i="'+i+'"><div class="ic">'+o.i+'</div><small>'+o.n+'</small></button>':'<div class="islot"><small>empty</small></div>'; }
+  setHTML($('inv'),h);
+  const so=G.inv[G.sel];
+  let info;
+  if(so){
+    if(so.junk) info='<span>Selected: <b style="color:var(--am)">'+so.i+' '+so.n+'</b> — useless</span><button class="btn rd" data-act="drop">🗑 Drop</button>';
+    else { const k=Object.keys(SAB).find(k=>SAB[k].item===so.id); info='<span>Selected: <b style="color:var(--am)">'+so.i+' '+so.n+'</b> — fixes «'+SAB[k].name+'» at '+ROOMS[SAB[k].room].short+'. It is used automatically.</span>'; }
+  } else info='<span class="none">Parts are used automatically when you repair. Click an item for details · click 🔦 / 🔋 to toggle and recharge.</span>';
+  setHTML($('invInfo'),info);
+  setHTML($('log'),G.log.slice(0,12).map(l=>'<div class="'+(l.c||'')+'">'+l.m+'</div>').join(''));
+  $('rName').textContent=ROOMS[G.room].name; $('rSub').textContent=ROOMS[G.room].sub;
+  if(G.search) $('cuStat').textContent='Inventory '+G.inv.length+'/'+MAXINV+' · 🔋 spares '+G.spare+'/'+MAX_SPARE+' · 🔦 '+Math.round(G.batt)+'%';
+  G.dirty=false;
+}
+function setBar(id,v,bad,txt,vid){ const e=$(id); e.querySelector('.bar i').style.width=clamp(v,0,100)+'%'; e.classList.toggle('bad',bad); $(vid).textContent=txt; }
+function updateUI(){
+  const nd=nearDoor(), ns=nearStation(), nf=nearFurn(), A=G.alien;
+  const key=[G.room,nd?nd.to:'',ns?ns.id:'',nf?nf.f:'',!!G.action,!!G.chase,!!G.trans,!!G.search,G.sel,isDark(),lit(),G.flash,G.batt<=20,G.spare,G.jam,
+             G.inv.map(o=>o.id+o.n).join(','),G.sabs.map(s=>s.type).join(','),alienVisible()?A.room:'',!!A.prowl].join('|');
+  if(key!==G.ctxKey){ G.ctxKey=key; G.dirty=true; }
+  if(G.dirty) rebuild();
+  setBar('sO2',G.o2,G.o2<25,Math.round(G.o2)+'%','vO2');
+  setBar('sPow',G.pow,G.pow<20,Math.round(G.pow)+'%','vPow');
+  setBar('sTmp',G.temp,G.temp<15||G.temp>85,Math.round(G.temp*.4+2)+'°C','vTmp');
+  setBar('sCri',G.crisis,G.crisis<30,Math.round(G.crisis)+'%','vCri');
+  setBar('sNoi',G.noise,G.noise>70,Math.round(G.noise)+'%','vNoi');
+  $('vDay').textContent=Math.min(G.day,5)+'/5'; $('bDay').style.width=(G.dayT/DAY_LEN*100)+'%';
+  const h=(6+(G.dayT/DAY_LEN)*20)%24; $('vTime').textContent=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.floor((h%1)*60)).padStart(2,'0');
+  $('vPhase').textContent=isNight()?'🌙 NIGHT':'☀ DAY';
+  const bb=$('battBar'); if(bb){ bb.style.width=clamp(G.batt,0,100)+'%'; $('battTxt').textContent=Math.round(G.batt)+'%'; }
+  document.querySelectorAll('#alerts .bar i').forEach((el,i)=>{ if(G.sabs[i]) el.style.width=clamp(G.sabs[i].age/22*100,0,100)+'%'; });
+  if(G.time-G.teleT>.5||G.time<G.teleT){ G.teleT=G.time; setHTML($('tele'),telemetry()); }
+  const ab=$('actionBar');
+  if(G.action){ const p=G.action.t/G.action.dur;
+    if(!ab.querySelector('.bar')){ ab.innerHTML='<span id="aLabel"></span><div class="bar"><i></i></div><button class="btn" id="bCancel" style="padding:2px 8px;font-size:12px">✖</button>'; $('bCancel').onclick=cancelAction; }
+    $('aLabel').textContent=G.action.label; ab.querySelector('.bar i').style.width=(p*100)+'%'; }
+  else if(!ab.querySelector('.none')){ ab.innerHTML='<span id="aLabel" class="none">Idle · walk and press E to interact</span>'; }
+  if(G.chase){ const c=G.chase;
+    if(c.mode==='choose') $('chBar').style.width=(1-c.t/c.limit)*100+'%';
+    else if(c.mode==='flee') $('chBar').style.width=(1-c.ft/4.5)*100+'%';
+    else { $('chBar').style.width=(100-c.lost/.7*100)+'%'; $('holdBar').style.width=(c.el/4*100)+'%'; }
+  }
+}
+
+/* ============ DRAWING: SIDE VIEW ============ */
+const cv=$('view'), ctx=cv.getContext('2d'), cu=$('cu'), cx=cu.getContext('2d');
+const R=(x,y,w,h,c)=>{ ctx.fillStyle=c; ctx.fillRect(x|0,y|0,w|0,h|0); };
+const PAL={control:{bg:'#0a1424',tile:'#0e1c34',wall:'#10203a',trim:'#1e3a66'},greenhouse:{bg:'#0a1c14',tile:'#0e2619',wall:'#102c1e',trim:'#1f5a3a'},machines:{bg:'#1c1209',tile:'#26180c',wall:'#2a1a0c',trim:'#5a3a18'},lab:{bg:'#111327',tile:'#181b36',wall:'#1a1d3e',trim:'#383e86'},airlock:{bg:'#160b0d',tile:'#201013',wall:'#2a1216',trim:'#6a2630'}};
+const PROPS={
+  control(t){
+    R(170,50,280,120,'#1e4f78'); R(176,56,268,108,'#04101c');
+    for(let j=0;j<7;j++) R(186,66+j*13,40+((Math.sin(t*2+j)+1)*70),5,'#39ff88');
+    R(480,70,90,70,'#1e4f78'); R(486,76,78,58,'#04101c'); R(492,100+Math.sin(t*3)*12,66,3,'#00f0ff');
+    R(220,250,200,50,'#12304a'); R(220,244,200,8,'#1e4f78'); R(240,206,64,38,'#04101c'); R(334,206,64,38,'#04101c');
+    R(250,216,44,3,'#39ff88'); R(344,216,30+Math.sin(t*4)*10,3,'#ffb800');
+    if(G.jam){ ctx.fillStyle='#ffb800'; ctx.font='bold 12px "Courier New"'; ctx.textAlign='center'; ctx.fillText('DOOR JAMMED: '+ROOMS[G.jam].short,320,196); }
+  },
+  greenhouse(t){
+    R(380,40,200,90,'#2a1210'); R(386,46,188,78,isNight()?'#1a1020':'#9b4a2a'); R(380,84,200,4,'#2a1210'); R(478,46,4,78,'#2a1210');
+    R(285,150,90,150,'#4a5a66'); R(297,165,66,46,'#06303a'); R(303,172,54,5,'rgba(0,240,255,'+(.4+.4*Math.sin(t*3))+')'); R(303,184,40,5,'rgba(0,240,255,.3)');
+    R(375,200,50,8,'#2a3640'); R(330,222,8,8,Math.sin(t*4)>0?(hasS('oxygen')?'#ff3b4e':'#39ff88'):'#113');
+    R(420,262,170,38,'#3a2512');
+    for(let j=0;j<9;j++){ const hh=14+((j*7)%9); R(428+j*18,262-hh,8,hh,'#2fbf5a'); R(430+j*18,258-hh,4,6,'#7dffaa'); }
+  },
+  machines(t){
+    R(0,100,W,10,'#555'); R(0,104,W,2,'#777'); R(560,100,10,200,'#555'); R(80,100,10,120,'#555');
+    R(200,200,130,100,'#6a3a14'); R(208,208,114,36,'#8c5220');
+    for(let i=0;i<3;i++) R(222+i*34,216+Math.sin(t*5+i)*4,18,22,'#c9a24a');
+    R(208,252,114,40,'#3a1f0a');
+    R(390,170,100,130,'#1a1a22');
+    for(let i=0;i<4;i++) for(let j=0;j<3;j++) R(400+i*22,182+j*38,16,26,(i+j)%2?'#ffb800':'#463a1a');
+  },
+  lab(t){
+    R(400,90,170,6,'#4a4f80'); for(let j=0;j<6;j++) R(408+j*26,70,14,20,['#ff2bd6','#00f0ff','#39ff88','#ffb800'][j%4]);
+    R(120,60,100,70,'#383e86'); R(126,66,88,58,'#04101c'); R(132,100+Math.sin(t*2)*14,76,3,'#39ff88');
+    R(235,250,150,50,'#2a2f66'); R(235,244,150,8,'#4a4f80');
+    R(250,226,12,18,'#ff2bd6'); R(280,222,10,22,'#00f0ff'); R(340,214,14,30,'#c9d3dc'); R(334,240,26,6,'#8a96a4');
+  },
+  airlock(t){
+    ctx.fillStyle='#2a1a1e'; ctx.beginPath(); ctx.arc(480,200,88,0,7); ctx.fill();
+    ctx.fillStyle='#10080a'; ctx.beginPath(); ctx.arc(480,200,70,0,7); ctx.fill();
+    ctx.strokeStyle='#ff3b4e'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(480,200,78,0,7); ctx.stroke();
+    R(474,112,12,176,'#2a1a1e'); R(392,194,176,12,'#2a1a1e');
+    R(430,40,100,24,'#1a0a0c'); R(436,46,88,12,Math.sin(t*6)>0?'#ff3b4e':'#4a1018');
+    for(let i=0;i<24;i++) R(i*40,H-18,20,18,'#ffb800'); R(0,H-18,W,3,'#000');
+  }
+};
+function drawFurniture(){
+  const nf=(!G.search&&!G.chase)?nearFurn():null;
+  // cabinet
+  let x=625; R(x-45,160,90,140,'#5a4028'); R(x-41,164,38,132,'#6e4e30'); R(x+3,164,38,132,'#6e4e30'); R(x-9,222,5,18,'#c9a24a'); R(x+4,222,5,18,'#c9a24a');
+  // shelf
+  x=715; R(x-45,150,90,150,'#242840'); R(x-45,150,5,150,'#3a3f5a'); R(x+40,150,5,150,'#3a3f5a');
+  [195,240,285].forEach((y,i)=>{ R(x-45,y,90,5,'#6b5a3a'); R(x-36,y-16,16,16,['#4a9bd1','#c9a24a','#7d5a9b'][i]); R(x-12,y-22,14,22,['#c9d3dc','#39ff88','#ff8a3d'][i]); R(x+12,y-14,20,14,['#8c5220','#4a5a66','#9b3a5a'][i]); });
+  // jars
+  x=805; R(x-45,250,90,50,'#3a3f56'); R(x-45,244,90,8,'#5a6080');
+  R(x-34,222,18,22,'rgba(150,220,255,.55)'); R(x-8,218,18,26,'rgba(150,255,200,.5)'); R(x+18,224,16,20,'rgba(255,200,150,.5)');
+  ctx.font='10px "Courier New"'; ctx.textAlign='center';
+  [['CABINET',625],['SHELF',715],['JARS',805]].forEach(([n,fx],i)=>{
+    const on=nf&&nf.f===FURNS[i];
+    ctx.fillStyle=on?'#39ff88':'rgba(207,232,255,.55)'; ctx.fillText(n,fx,318);
+    if(on){ ctx.font='bold 12px "Courier New"'; ctx.fillText('[E] SEARCH',fx,140); ctx.font='10px "Courier New"';
+      ctx.strokeStyle='#39ff88'; ctx.lineWidth=2; ctx.strokeRect(fx-47,148,94,154); }
+    else if(mouse.x>=fx-45&&mouse.x<=fx+45&&mouse.y>=150&&mouse.y<=305&&!G.search&&!G.chase){ ctx.strokeStyle='#00f0ff'; ctx.lineWidth=2; ctx.strokeRect(fx-41,152,82,150); }
+  });
+}
+function drawAlien(x,y,s,t){
+  const c='#05080b'; ctx.shadowColor='#ff2840'; ctx.shadowBlur=16;
+  R(x-10*s,y-40*s,20*s,14*s,c); R(x-6*s,y-46*s,12*s,7*s,c); R(x-12*s,y-26*s,24*s,34*s,c);
+  R(x-22*s,y-24*s,8*s,44*s,c); R(x+14*s,y-24*s,8*s,44*s,c); R(x-9*s,y+8*s,7*s,32*s,c); R(x+2*s,y+8*s,7*s,32*s,c);
+  const g=.6+.4*Math.sin(t*9); ctx.shadowBlur=0;
+  R(x-7*s,y-36*s,5*s,3*s,'rgba(255,40,60,'+g+')'); R(x+2*s,y-36*s,5*s,3*s,'rgba(255,40,60,'+g+')');
+}
+function drawPlayer(x,y,face,wlk){
+  const s=2.6, leg=wlk?Math.sin(G.walk)*4:0;
+  ctx.save(); ctx.translate(x,y); ctx.scale(face*s,s);
+  R(-6+leg*.6,-12,5,12,'#c9d3dc'); R(1-leg*.6,-12,5,12,'#c9d3dc');
+  R(-12,-30,4,16,'#9fb0c2'); R(-8,-30,16,19,'#e8eef4'); R(-8,-22,16,3,'#ff7a1a');
+  R(8,-29+(wlk?Math.sin(G.walk)*2:0),4,14,'#c9d3dc');
+  R(-7,-42,14,13,'#dfe8f0'); R(1,-39,6,8,'#06303a'); R(2,-38,3,2,'rgba(255,255,255,.5)');
+  if(isDark()&&lit()) R(10,-24,8,3,'#fff3a0');
+  ctx.restore();
+}
+function draw(ts){
+  const t=ts/1000;
+  if(!G){ R(0,0,W,H,'#000'); return; }
+  const r=G.room, p=PAL[r], ch=G.chase, A=G.alien, pr=A.prowl;
+  ctx.save(); ctx.imageSmoothingEnabled=false; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  if(ch||pr||G.noise>85) ctx.translate(Math.round(rnd(-2,2)),Math.round(rnd(-2,2)));
+  R(0,0,W,300,p.wall);
+  for(let x=0;x<W;x+=120){ R(x,0,3,300,'rgba(0,0,0,.25)'); R(x+3,0,2,300,'rgba(255,255,255,.04)'); }
+  R(0,296,W,8,p.trim);
+  R(0,304,W,H-304,p.bg);
+  for(let i=0;i<4;i++) R(0,310+i*30,W,2,p.tile);
+  for(let x=-30;x<W;x+=90) R(x,304,2,H-304,p.tile);
+  PROPS[r](t);
+  // doors
+  ROOMS[r].doors.forEach(d=>{
+    const jam=G.jam===d.to;
+    R(d.x-36,160,72,140,'#03060c'); R(d.x-30,166,60,134,jam?'#2a0a10':'#0c1a30'); R(d.x-2,166,4,134,'rgba(0,0,0,.4)');
+    R(d.x-36,150,72,8,jam?'#ff3b4e':'#00f0ff');
+    ctx.font='bold 11px "Courier New"'; ctx.fillStyle=jam?'#ff3b4e':'#cfe8ff'; ctx.fillText(ROOMS[d.to].short,d.x,142);
+    if(jam){ ctx.font='34px serif'; ctx.fillText('🔒',d.x,250); }
+    // red eyes behind the door when MARS-X is in that room
+    if(A.room===d.to&&!ch&&!pr){ const g=.35+.65*Math.abs(Math.sin(t*2.5)); R(d.x-12,200,8,4,'rgba(255,40,60,'+g+')'); R(d.x+4,200,8,4,'rgba(255,40,60,'+g+')'); }
+  });
+  // hiding locker
+  const hiding=ch&&ch.mode==='hide';
+  R(141,196,48,104,'#2b3648'); R(141,196,48,5,'#4a5a74'); for(let i=0;i<5;i++) R(150,210+i*8,30,2,'#0e141e'); R(181,244,3,10,'#9fb2cc');
+  ctx.font='10px "Courier New"'; ctx.fillStyle='rgba(207,232,255,.55)'; ctx.fillText('LOCKER',165,318);
+  if(hiding) R(155,222,18,5,'rgba(255,255,255,'+(.5+.5*Math.sin(t*10))+')');
+  drawFurniture();
+  // stations
+  ROOMS[r].stations.forEach(s=>{
+    const near=Math.abs(G.px-s.x)<75&&!ch;
+    const broken=G.sabs.some(sb=>SAB[sb.type].room===r&&SAB[sb.type].st===s.id);
+    ctx.font='bold 11px "Courier New"'; ctx.fillStyle=broken?(Math.sin(t*8)>0?'#ff3b4e':'#ffb800'):near?'#39ff88':'rgba(207,232,255,.6)';
+    ctx.fillText((near?'▼ ':'')+(broken?'⚠ ':'')+s.name,s.x,r==='airlock'?100:128);
+  });
+  const dn=!ch&&nearDoor();
+  if(dn){ ctx.font='bold 12px "Courier New"'; ctx.fillStyle='#39ff88'; ctx.fillText('[E] ENTER',dn.x,126); }
+  drawPlayer(hiding?-200:G.px,FY,G.face,G.moving&&!G.search);
+  // sabotage effects
+  if(r==='greenhouse'&&hasS('oxygen')){ R(0,0,W,H,'rgba(255,40,60,'+(.12+.1*Math.sin(t*6))+')'); }
+  if(r==='machines'&&hasS('temp')){ R(0,0,W,H,G.tdir>0?'rgba(255,120,30,'+(.15+.08*Math.sin(t*5))+')':'rgba(60,160,255,'+(.15+.08*Math.sin(t*5))+')'); }
+  if(r==='airlock'&&hasS('breach')){ R(0,0,W,H,'rgba(255,0,30,'+(.12+.12*Math.sin(t*8))+')'); for(let i=0;i<20;i++) R(480+((t*260+i*47)%420)-60,140+((i*53)%140),5,2,'#cfe8ff'); }
+  // alien
+  let prowlX=null;
+  if(ch){
+    const ax=ch.mode==='choose'?G.px+300-Math.min(1,ch.t/ch.limit)*170:G.px+150+Math.sin(t*2)*40;
+    drawAlien(clamp(ax,80,880),FY+8,3.4,t); R(0,0,W,H,'rgba(255,0,20,'+(.1+.1*Math.sin(t*10))+')');
+  } else if(pr){
+    prowlX=pr.sx+(pr.ex-pr.sx)*clamp(pr.t/pr.dur,0,1);
+    drawAlien(prowlX,FY+8,3.2,t); R(0,0,W,H,'rgba(255,0,20,'+(.05+.05*Math.sin(t*8))+')');
+  } else if(G.sabs.some(s=>s.age>14)&&Math.sin(t*3)>.4){ ctx.globalAlpha=.65; drawAlien(G.px<480?880:60,FY-50,1.2,t); ctx.globalAlpha=1; }
+  ctx.restore();
+  // door transition
+  if(G.trans){ ctx.fillStyle='rgba(0,0,0,'+Math.sin(Math.PI*G.trans.t/G.trans.dur)+')'; ctx.fillRect(0,0,W,H); }
+  // darkness and flashlight
+  if(isDark()){
+    const bo=blackout(), edge=bo?.985:.9;
+    let on=lit(); if(on&&G.batt<20&&Math.sin(t*23)>.55) on=false;       // low battery flicker
+    const usePtr=on&&(t-G.ptrT)<3;
+    const lx=usePtr?mouse.x:G.px+(on?G.face*70:0), ly=usePtr?mouse.y:FY-60;
+    const g=ctx.createRadialGradient(lx,ly,on?15:4,lx,ly,on?170:60);
+    g.addColorStop(0,'rgba(0,0,0,'+(on?0:.72)+')'); g.addColorStop(.55,'rgba(0,0,0,'+(on?.55:.9)+')'); g.addColorStop(1,'rgba(0,0,0,'+edge+')');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    if(pr&&prowlX!=null){ const e=.6+.4*Math.sin(t*9); ctx.fillStyle='rgba(255,40,60,'+e+')'; ctx.fillRect(prowlX-22,FY-108,16,9); ctx.fillRect(prowlX+7,FY-108,16,9); }   // eyes glow in the dark
+    ctx.textAlign='right'; ctx.font='bold 12px "Courier New"';
+    ctx.fillStyle=lit()?'#ffb800':'#ff3b4e';
+    ctx.fillText(lit()?'🔦 '+Math.round(G.batt)+'%':(G.batt<=0?'FLASHLIGHT DEAD · [R] recharge':'FLASHLIGHT OFF · [F]'),W-12,24);
+  }
+  // prowl warning
+  if(pr){
+    ctx.textAlign='center'; ctx.font='bold 20px "Courier New"'; ctx.fillStyle=Math.sin(t*10)>0?'#ff3b4e':'#ffb800';
+    ctx.fillText('MARS-X IS IN THE ROOM — FREEZE!',W/2,60);
+    ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(W/2-150,72,300,14);
+    ctx.fillStyle='#ff3b4e'; ctx.fillRect(W/2-148,74,296*pr.det,10);
+    ctx.font='bold 11px "Courier New"'; ctx.fillStyle='#cfe8ff'; ctx.fillText('DETECTION — do not move or work',W/2,102);
+  }
+  if(G.noise>70){ ctx.fillStyle='rgba(255,43,214,'+((G.noise-70)/200)+')'; ctx.fillRect(0,0,W,6); ctx.fillRect(0,H-6,W,6); }
+}
+
+/* ============ LOOP ============ */
+function loop(ts){
+  const dt=Math.min(.1,(ts-last)/1000||0); last=ts;
+  if(G&&scr==='game'){
+    if(!G.over&&!G.paused) tick(dt);
+    if(!G.over){ updateUI(); if(G.search) drawCloseup(ts/1000); }
+    draw(ts);
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ============ EVENTS ============ */
+$('bStart').onclick=()=>{ beep(500,.1,'square'); newGame(); };
+$('bAch').onclick=showAch; $('bAchBack').onclick=()=>show('menu');
+$('bHow').onclick=()=>{ $('how').hidden=!$('how').hidden; };
+$('bHide').onclick=chooseHide; $('bFlee').onclick=chooseFlee;
+document.querySelectorAll('.pad button').forEach(b=>b.onclick=()=>fleeKey(b.dataset.k));
+const holdSet=v=>()=>{ if(G&&G.chase) G.chase.holding=v; };
+$('bHold').addEventListener('pointerdown',e=>{ e.preventDefault(); holdSet(true)(); });
+['pointerup','pointerleave','pointercancel'].forEach(ev=>$('bHold').addEventListener(ev,holdSet(false)));
+$('bNotes').onclick=openManual;
+$('bManClose').onclick=()=>{ $('manual').hidden=true; if(G&&$('pauseOv').hidden) G.paused=false; };
+function setPause(p){ if(!G||G.over||scr!=='game') return; G.paused=p; $('pauseOv').hidden=!p; }
+$('bPause').onclick=()=>setPause(true); $('bResume').onclick=()=>setPause(false);
+$('bMute').onclick=()=>{ muted=!muted; $('bMute').textContent=muted?'🔇':'🔊'; };
+// on-screen movement
+[['bL',-1],['bR',1]].forEach(([id,d])=>{
+  const b=$(id);
+  b.addEventListener('pointerdown',e=>{ e.preventDefault(); if(G){ G.mvBtn=d; G.target=null; G.autoDoor=null; G.autoFurn=null; } b.classList.add('on'); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{ if(G&&G.mvBtn===d) G.mvBtn=0; b.classList.remove('on'); }));
+});
+$('bE').addEventListener('click',interact);
+// action buttons: one delegated listener, state is re-read at click time
+$('actions').addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]'); if(!b||!G||G.over||G.paused) return;
+  const a=actionsFor()[+b.dataset.a]; if(a&&a.en) a.fn();
+});
+// inventory bar
+$('inv').addEventListener('click',e=>{
+  if(!G||G.over) return;
+  const a=e.target.closest('[data-act]');
+  if(a){ if(a.dataset.act==='flash') toggleFlash(); else if(a.dataset.act==='recharge') recharge(); return; }
+  const b=e.target.closest('[data-i]');
+  if(b){ const i=+b.dataset.i; G.sel=G.sel===i?-1:i; G.dirty=true; beep(500,.05,'square',.03); }
+});
+$('invInfo').addEventListener('click',e=>{
+  if(!G||G.over||!e.target.closest('[data-act="drop"]')) return;
+  const o=G.inv[G.sel]; if(o&&o.junk){ G.inv.splice(G.sel,1); G.sel=-1; G.dirty=true; beep(200,.08,'square'); }
+});
+// click / tap on the stage
+cv.addEventListener('pointermove',e=>{ const r=cv.getBoundingClientRect(); mouse.x=(e.clientX-r.left)/r.width*W; mouse.y=(e.clientY-r.top)/r.height*H; if(G) G.ptrT=performance.now()/1000; });
+cv.addEventListener('pointerdown',e=>{
+  const r=cv.getBoundingClientRect(); const x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
+  mouse.x=x; mouse.y=y; if(!G) return; G.ptrT=performance.now()/1000;
+  if(G.over||G.chase||G.paused||G.search||G.trans) return;
+  G.autoDoor=null; G.autoFurn=null;
+  const f=FURN.find(h=>Math.abs(x-h.x)<=45&&y>=150&&y<=305);
+  if(f){ if(Math.abs(G.px-f.x)<=45){ G.target=null; openCloseup(f.f); } else { G.target=f.x; G.autoFurn=f.f; } return; }
+  const d=ROOMS[G.room].doors.find(d=>Math.abs(x-d.x)<40&&y>150&&y<305);
+  if(d){ G.target=d.x; G.autoDoor=d; return; }
+  const st=ROOMS[G.room].stations.find(s=>Math.abs(x-s.x)<60&&y>110&&y<305);
+  G.target=clamp(st?st.x:x,30,930);
+});
+// close-up
+$('cuClose').onclick=closeSearch;
+$('cuTake').onclick=cuTake;
+cu.addEventListener('pointermove',e=>{ if(!G||!G.search) return; const p=cuPoint(e); cuMouse=p; G.search.hover=cuSlotAt(p.x,p.y); });
+cu.addEventListener('pointerleave',()=>{ if(G&&G.search) G.search.hover=-1; });
+cu.addEventListener('pointerdown',e=>{ if(!G||!G.search||G.paused) return; const p=cuPoint(e); cuMouse=p; cuClick(cuSlotAt(p.x,p.y)); });
+// keyboard
+const KM={ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',w:'↑',s:'↓',a:'←',d:'→',W:'↑',S:'↓',A:'←',D:'→'};
+document.addEventListener('keydown',e=>{
+  if(!G||G.over||scr!=='game') return;
+  const k=e.key.length===1?e.key.toLowerCase():e.key;
+  if(k==='p'&&!G.chase&&$('manual').hidden){ setPause(!G.paused); return; }
+  if(G.paused) return;
+  if(G.chase){
+    const m=G.chase.mode;
+    if(m==='choose'){ if(k==='h') chooseHide(); if(k==='f') chooseFlee(); }
+    else if(m==='hide'&&e.code==='Space'){ e.preventDefault(); G.chase.holding=true; }
+    else if(m==='flee'&&KM[e.key]){ e.preventDefault(); fleeKey(KM[e.key]); }
+    return;
+  }
+  if(k==='f'){ toggleFlash(); return; }
+  if(k==='r'){ recharge(); return; }
+  if(G.search){ if(k==='Escape') closeSearch(); return; }
+  if(k==='ArrowLeft'||k==='a'){ e.preventDefault(); keys.left=true; }
+  if(k==='ArrowRight'||k==='d'){ e.preventDefault(); keys.right=true; }
+  if((k==='e'||k==='Enter')&&!e.repeat){ e.preventDefault(); interact(); }
+});
+document.addEventListener('keyup',e=>{
+  if(G&&G.chase&&e.code==='Space') G.chase.holding=false;
+  const k=e.key.length===1?e.key.toLowerCase():e.key;
+  if(k==='ArrowLeft'||k==='a') keys.left=false;
+  if(k==='ArrowRight'||k==='d') keys.right=false;
+});
+window.addEventListener('blur',()=>{ keys.left=keys.right=false; if(G) G.mvBtn=0; });
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
